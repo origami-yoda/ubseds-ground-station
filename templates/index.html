@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ground Station</title>
+  <link rel="stylesheet" href="../static/css/styles.css">
+  <link rel="stylesheet" href="../static/css/bootstrap.min.css">
+  <link rel="stylesheet" href="../static/css/ol.css">
+
+  <script src="../static/js/socket.io.js"></script>
+  <script src="../static/js/chart.umd.js"></script>
+  <script src="../static/js/justgage.js"></script>
+  <script src="../static/js/raphael-2.1.4.min.js"></script>
+  <script src="../static/js/ol.min.js"></script>
+</head>
+
+<body>
+  <div class="container-fluid">
+    <div class=row id="header">
+      <div class="col-md-4">
+        <img src="../static/img/logo.png" class="logo" alt="logo">
+        <img src="../static/img/ground-station-text.png" class="ground-station-text" alt="Ground Station">
+      </div>
+      <div class="col-md-8">
+        <div class="row justify-content-end">
+          <div class="col-md-auto">
+            <div class="card">
+              <div class="card-body">
+                <h5 class="card-title text-center">Status</h5>
+                <p class="card-text text-center">Operational</p>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-auto">
+            <div class="card">
+              <div class="card-body">
+                <h5 class="card-title text-center">Phase</h5>
+                <p id="phase" class="card-text text-center">-</p>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-auto">
+            <div class="card">
+              <div class="card-body">
+                <h5 class="card-title text-center">Time</h5>
+                <p id="time" class="card-text text-center">-</p>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-auto">
+            <div class="card">
+              <div class="card-body">
+                <h5 class="card-title text-center">Voltage</h5>
+                <p id="voltage" class="card-text text-center">-</p>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-auto">
+            <div class="card">
+              <div class="card-body">
+                <h5 class="card-title text-center">Ping</h5>
+                <p class="card-text text-center">2ms</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="container-fluid" id="telemetryContainer">
+    <div class="row" style="height: 80vh;">
+      <div class="col-md-3">
+        <div class="chart-container accel">
+          <canvas id="accelChart" style="height: 100%; width: 100%;"></canvas>
+        </div>
+        <div class="chart-container velocity">
+          <canvas id="velocityChart" style="height: 100%; width: 100%;"></canvas>
+        </div>
+      </div>
+      <div class="col-md-6">
+        <div class="chart-container altitude">
+          <canvas id="altitudeChart" style="height: 100%; width: 100%;"></canvas>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <div class="row"">
+          <div class=" col-md-6">
+          <div class="gauge-container">
+            <div id="temperatureGauge"></div>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="gauge-container">
+            <div id="pressureGauge"></div>
+          </div>
+        </div>
+      </div>
+      <div class="row raw-data" style="height: 16%;">
+        <div class="col-md-12">
+          <table class="table">
+            <thead>
+              <tr>
+                <th class="text-center">Raw Acc</th>
+                <th class="text-center">Raw Alt</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td id="raw-acc" class="text-center">-</td>
+                <td id="raw-alt" class="text-center">-</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+  </div>
+  <div class="container-fluid" id="mapContainer" style="display: none; height: 80vh;"></div>
+  <div class="container mt-4">
+    <div class="row justify-content-center">
+      <div class="col-md-auto">
+        <button class="btn map-button" onclick="toggleTelemetry()">Map</button>
+      </div>
+    </div>
+  </div>  
+  <script>
+    function toggleTelemetry() {
+      var telemetryContainer = document.getElementById("telemetryContainer");
+      var mapContainer = document.getElementById("mapContainer");
+      var button = document.querySelector(".map-button");
+  
+      if (telemetryContainer.style.display === "none") {
+        telemetryContainer.style.display = "block";
+        mapContainer.style.display = "none";
+        button.textContent = "Map";
+      } else {
+        telemetryContainer.style.display = "none";
+        mapContainer.style.display = "block";
+        button.textContent = "Telemetry";
+      }
+    }
+  </script>  
+  <script>
+    // Initializing the socket
+    var socket = io();
+    socket.on('connect', function () {
+      console.log('Connected to server');
+    });
+    socket.on('disconnect', function () {
+      console.log('Disconnected from server');
+    });
+
+    // Function to create charts
+    function createChart(canvasId, label, yLabel) {
+      var data = [];
+      var timeData = [];
+      var ctx = document.getElementById(canvasId).getContext("2d");
+      var chart = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: [],
+          datasets: [{
+            label: label,
+            data: data,
+            borderColor: 'rgba(7, 30, 38, 1)',
+            fill: false,
+            pointRadius: 2,
+          }]
+        },
+        options: {
+          scales: {
+            x: {
+              title: {
+                display: true,
+                text: 'Time (s)'
+              }
+            },
+            y: {
+              title: {
+                display: true,
+                text: yLabel
+              }
+            }
+          },
+          plugins: {
+            legend: {
+              display: false // Hide the legend
+            },
+            title: {
+              display: true,
+              text: label + ' vs Time' // Set the title text
+            }
+          }
+        }
+      });
+
+      return { data, timeData, chart };
+    }
+
+    var { data: accelData, timeData: accelTimeData, chart: accelChart } = createChart("accelChart", "Acceleration", "Acceleration (m/s^2)");
+    var { data: altitudeData, timeData: altitudeTimeData, chart: altitudeChart } = createChart("altitudeChart", "Altitude", "Altitude (m)");
+    var { data: velocityData, timeData: velocityTimeData, chart: velocityChart } = createChart("velocityChart", "Velocity", "Velocity (m/s)");
+
+    // Create gauges
+    var temperatureGauge = new JustGage({
+      id: "temperatureGauge",
+      value: 0,
+      min: 30,
+      max: 90,
+      title: "Temperature",
+      label: "°C",
+      decimals: true
+    })
+
+    var pressureGauge = new JustGage({
+      id: "pressureGauge",
+      value: 60,
+      min: 30,
+      max: 90,
+      title: "Pressure",
+      label: "PSI",
+      decimals: true
+    })
+
+    var map;
+
+    function initMap() {
+      map = new ol.Map({
+        target: "mapContainer", 
+        layers: [
+          new ol.layer.Tile({
+            source: new ol.source.OSM()
+          })
+        ],
+        view: new ol.View({
+          center: ol.proj.fromLonLat([0,0]),
+          zoom: 2
+        })
+      });
+    }
+    
+    window.onload = initMap;
+
+    function addMarker(lon, lat) {
+      var marker = new ol.Feature({
+        geometry: new ol.geom.Point(ol.proj.fromLonLat([lon, lat]))
+      });
+
+      var markerStyle = new ol.style.Style({
+        image: new ol.style.Icon({
+          src: "../static/img/marker.png", 
+          scale: 0.5
+        })
+      });
+
+      marker.setStyle(markerStyle);
+
+      var vectorSource = new ol.source.Vector({
+        features: [marker]
+      });
+
+      var vectorLayer = new ol.layer.Vector({
+        source: vectorSource
+      });
+
+      map.addLayer(vectorLayer);
+    }
+
+    socket.on('data', function (packet) {
+      document.getElementById('phase').innerText = packet.phase;
+      document.getElementById('voltage').innerText = packet.batt_v + ' V';
+      document.getElementById('time').innerText = Math.round((packet.millis / 1000) * 100) / 100 + ' S';
+      document.getElementById('raw-acc').innerText = Math.round(packet.raw_acc*1000)/1000;
+      document.getElementById('raw-alt').innerText = Math.round(packet.raw_alt*1000)/1000;
+
+
+      accelData.push(packet.acc);
+      accelTimeData.push(Math.round((packet.millis / 1000) * 100) / 100);
+      accelChart.data.labels = accelTimeData;
+      accelChart.data.datasets[0].data = accelData;
+      accelChart.update();
+
+      altitudeData.push(packet.alt);
+      altitudeTimeData.push(Math.round((packet.millis / 1000) * 100) / 100);
+      altitudeChart.data.labels = altitudeTimeData;
+      altitudeChart.data.datasets[0].data = altitudeData;
+      altitudeChart.update();
+
+      velocityData.push(packet.vel);
+      velocityTimeData.push(Math.round((packet.millis / 1000) * 100) / 100);
+      velocityChart.data.labels = velocityTimeData;
+      velocityChart.data.datasets[0].data = velocityData;
+      velocityChart.update();
+
+      temperatureGauge.refresh(packet.temp);
+
+      addMarker(packet.lon, packet.lat);
+    });
+  </script>
+</body>
+
+</html>

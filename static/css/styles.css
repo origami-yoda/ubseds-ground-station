@@ -1,0 +1,85 @@
+body {
+  color: black;
+  background-color: #040f13 !important;
+}
+
+.logo {
+  display: inline-block;
+  margin-right: 10px; /* Adjust the margin as needed */
+  width: auto;
+  height: 3rem;
+  margin-top: 10px;
+}
+
+.ground-station-text {
+  height: 2.5rem;
+}
+
+#header {
+  background-color: #0a244a; 
+  border-bottom-left-radius: 15px;
+  border-bottom-right-radius: 15px;
+  margin-bottom: 15px;
+  padding: 10px;
+}
+
+#time {
+  white-space: nowrap;
+}
+
+.card {
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px;
+  max-height: 4rem; 
+  width: 100px;
+}
+
+.chart-container {
+  background-color: white;
+  padding: 10px;
+  border-radius: 10px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+}
+
+.chart-container.accel {
+  margin-left: 10px;
+  height: 49%;
+  width: 100%;
+}
+
+.chart-container.altitude{
+    height: 100%; 
+    width: 100%;
+}
+
+.chart-container.velocity {
+  margin-left: 10px;
+  margin-top: 2%;
+  height: 50%;
+  width: 100%;
+}
+
+.map-button {
+  margin-top: -20px;
+  background-color: #0a244a;
+  color: white;
+  font-weight: bold !important;
+  font-size: 20px !important; 
+  padding: 5px 10px ;   
+} 
+
+.gauge-container {
+  background-color: white;
+  border-radius: 15px;
+}
+
+.raw-data {
+  background-color: white;
+  margin-top: 20px;
+  border-radius: 5px;
+  margin-right: 1px !important;
+  margin-left: 1px !important;
+}
