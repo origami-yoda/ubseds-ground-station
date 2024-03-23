@@ -128,9 +128,9 @@
   </div>  
   <script>
     function toggleTelemetry() {
-      var telemetryContainer = document.getElementById("telemetryContainer");
-      var mapContainer = document.getElementById("mapContainer");
-      var button = document.querySelector(".map-button");
+      let telemetryContainer = document.getElementById("telemetryContainer");
+      let mapContainer = document.getElementById("mapContainer");
+      let button = document.querySelector(".map-button");
   
       if (telemetryContainer.style.display === "none") {
         telemetryContainer.style.display = "block";
@@ -145,7 +145,7 @@
   </script>  
   <script>
     // Initializing the socket
-    var socket = io();
+    let socket = io();
     socket.on('connect', function () {
       console.log('Connected to server');
     });
@@ -155,10 +155,10 @@
 
     // Function to create charts
     function createChart(canvasId, label, yLabel) {
-      var data = [];
-      var timeData = [];
-      var ctx = document.getElementById(canvasId).getContext("2d");
-      var chart = new Chart(ctx, {
+      let data = [];
+      let timeData = [];
+      let ctx = document.getElementById(canvasId).getContext("2d");
+      let chart = new Chart(ctx, {
         type: 'line',
         data: {
           labels: [],
@@ -200,12 +200,12 @@
       return { data, timeData, chart };
     }
 
-    var { data: accelData, timeData: accelTimeData, chart: accelChart } = createChart("accelChart", "Acceleration", "Acceleration (m/s^2)");
-    var { data: altitudeData, timeData: altitudeTimeData, chart: altitudeChart } = createChart("altitudeChart", "Altitude", "Altitude (m)");
-    var { data: velocityData, timeData: velocityTimeData, chart: velocityChart } = createChart("velocityChart", "Velocity", "Velocity (m/s)");
+    let { data: accelData, timeData: accelTimeData, chart: accelChart } = createChart("accelChart", "Acceleration", "Acceleration (m/s^2)");
+    let { data: altitudeData, timeData: altitudeTimeData, chart: altitudeChart } = createChart("altitudeChart", "Altitude", "Altitude (m)");
+    let { data: velocityData, timeData: velocityTimeData, chart: velocityChart } = createChart("velocityChart", "Velocity", "Velocity (m/s)");
 
     // Create gauges
-    var temperatureGauge = new JustGage({
+    let temperatureGauge = new JustGage({
       id: "temperatureGauge",
       value: 0,
       min: 30,
@@ -215,7 +215,7 @@
       decimals: true
     })
 
-    var pressureGauge = new JustGage({
+    let pressureGauge = new JustGage({
       id: "pressureGauge",
       value: 60,
       min: 30,
@@ -225,7 +225,7 @@
       decimals: true
     })
 
-    var map;
+    let map;
 
     function initMap() {
       map = new ol.Map({
@@ -245,11 +245,11 @@
     window.onload = initMap;
 
     function addMarker(lon, lat) {
-      var marker = new ol.Feature({
+      let marker = new ol.Feature({
         geometry: new ol.geom.Point(ol.proj.fromLonLat([lon, lat]))
       });
 
-      var markerStyle = new ol.style.Style({
+      let markerStyle = new ol.style.Style({
         image: new ol.style.Icon({
           src: "../static/img/marker.png", 
           scale: 0.5
@@ -258,11 +258,11 @@
 
       marker.setStyle(markerStyle);
 
-      var vectorSource = new ol.source.Vector({
+      let vectorSource = new ol.source.Vector({
         features: [marker]
       });
 
-      var vectorLayer = new ol.layer.Vector({
+      let vectorLayer = new ol.layer.Vector({
         source: vectorSource
       });
 
