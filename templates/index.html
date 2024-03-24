@@ -14,6 +14,8 @@
   <script src="../static/js/justgage.js"></script>
   <script src="../static/js/raphael-2.1.4.min.js"></script>
   <script src="../static/js/ol.min.js"></script>
+  <script src="../static/js/three.min.js"></script>
+  <script src="../static/js/OBJLoader.js"></script>
 </head>
 
 <body>
@@ -61,7 +63,7 @@
             <div class="card">
               <div class="card-body">
                 <h5 class="card-title text-center">Ping</h5>
-                <p class="card-text text-center">2ms</p>
+                <p class="card-text text-center">3 ms</p>
               </div>
             </div>
           </div>
@@ -115,6 +117,9 @@
           </table>
         </div>
       </div>
+      <div class="row" style="height: 52.5%;">
+        <div id="rocket-model" class="rocket-model"></div>
+      </div>
     </div>
   </div>
   </div>
@@ -125,13 +130,13 @@
         <button class="btn map-button" onclick="toggleTelemetry()">Map</button>
       </div>
     </div>
-  </div>  
+  </div>
   <script>
     function toggleTelemetry() {
       let telemetryContainer = document.getElementById("telemetryContainer");
       let mapContainer = document.getElementById("mapContainer");
       let button = document.querySelector(".map-button");
-  
+
       if (telemetryContainer.style.display === "none") {
         telemetryContainer.style.display = "block";
         mapContainer.style.display = "none";
@@ -142,7 +147,7 @@
         button.textContent = "Telemetry";
       }
     }
-  </script>  
+  </script>
   <script>
     // Initializing the socket
     let socket = io();
@@ -229,30 +234,36 @@
 
     function initMap() {
       map = new ol.Map({
-        target: "mapContainer", 
+        target: "mapContainer",
         layers: [
           new ol.layer.Tile({
             source: new ol.source.OSM()
           })
         ],
         view: new ol.View({
-          center: ol.proj.fromLonLat([0,0]),
-          zoom: 2
+          center: ol.proj.fromLonLat([0, 0]),
+          zoom: 1/28
         })
       });
     }
-    
+
     window.onload = initMap;
 
     function addMarker(lon, lat) {
+      map.getLayers().forEach(layer => {
+        if (layer instanceof ol.layer.Vector) {
+          layer.getSource().clear();
+        }
+      });
+
       let marker = new ol.Feature({
         geometry: new ol.geom.Point(ol.proj.fromLonLat([lon, lat]))
       });
 
       let markerStyle = new ol.style.Style({
         image: new ol.style.Icon({
-          src: "../static/img/marker.png", 
-          scale: 0.5
+          src: "../static/img/marker.png",
+          scale: 0.1  
         })
       });
 
@@ -273,8 +284,8 @@
       document.getElementById('phase').innerText = packet.phase;
       document.getElementById('voltage').innerText = packet.batt_v + ' V';
       document.getElementById('time').innerText = Math.round((packet.millis / 1000) * 100) / 100 + ' S';
-      document.getElementById('raw-acc').innerText = Math.round(packet.raw_acc*1000)/1000;
-      document.getElementById('raw-alt').innerText = Math.round(packet.raw_alt*1000)/1000;
+      document.getElementById('raw-acc').innerText = Math.round(packet.raw_acc * 1000) / 1000;
+      document.getElementById('raw-alt').innerText = Math.round(packet.raw_alt * 1000) / 1000;
 
 
       accelData.push(packet.acc);

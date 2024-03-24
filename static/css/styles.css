@@ -83,3 +83,14 @@ body {
   margin-right: 1px !important;
   margin-left: 1px !important;
 }
+
+#rocket-model {
+  margin-top: 25px;
+  margin-right: 15px !important;
+  margin-left: 15px !important;
+  background-color: white;
+  border-radius: 15px;
+  height: 100%;
+  width: 100%;
+}
+
