@@ -280,6 +280,55 @@
       map.addLayer(vectorLayer);
     }
 
+    document.addEventListener("DOMContentLoaded", function () {
+      const scene = new THREE.Scene();
+      const camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
+
+      const modelContainer = document.getElementById('rocket-model');
+      const renderer = new THREE.WebGLRenderer();
+      renderer.setSize(modelContainer.clientWidth, modelContainer.clientHeight);
+      modelContainer.appendChild(renderer.domElement);
+
+      const ambientLight = new THREE.AmbientLight(0x404040, 0.5);
+      scene.add(ambientLight);
+
+      const loader = new THREE.OBJLoader();
+      loader.load(
+        '../static/assets/rocket.obj',
+        function (obj) {
+          obj.traverse(function (child) {
+            if (child instanceof THREE.Mesh) {
+              child.material = new THREE.MeshPhongMaterial( {color: 0x333333} );
+              child.castShadow = true;
+            }
+          });
+          obj.scale.set(0.2, 0.2, 0.2);
+          object.position.y = 100;
+          scene.add(obj);
+        }, 
+        function (xhr) {
+          console.log((xhr.loaded/xhr.total) * 100 + "% loaded");
+        }, 
+        function (error) {
+          console.error("Error loading model: " + error);
+        }
+      );
+
+      camera.position.set(0, 100, 600);
+
+      function animate() {
+        requestAnimationFrame(animate);
+        renderer.render(scene, camera);
+      }
+      animate();
+
+      window.addEventListener("resize", function () {
+        camera.aspect = window.innerWidth/window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+      });
+    });
+
     socket.on('data', function (packet) {
       document.getElementById('phase').innerText = packet.phase;
       document.getElementById('voltage').innerText = packet.batt_v + ' V';
