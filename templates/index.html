@@ -170,7 +170,7 @@
           datasets: [{
             label: label,
             data: data,
-            borderColor: 'rgba(7, 30, 38, 1)',
+            borderColor: '  ',
             fill: false,
             pointRadius: 2,
           }]
@@ -242,7 +242,7 @@
         ],
         view: new ol.View({
           center: ol.proj.fromLonLat([0, 0]),
-          zoom: 1/28
+          zoom: 2 
         })
       });
     }
@@ -285,7 +285,8 @@
       const camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
 
       const modelContainer = document.getElementById('rocket-model');
-      const renderer = new THREE.WebGLRenderer();
+      const renderer = new THREE.WebGLRenderer( {antialias: true} );
+      renderer.setClearColor(0xffffff);
       renderer.setSize(modelContainer.clientWidth, modelContainer.clientHeight);
       modelContainer.appendChild(renderer.domElement);
 
@@ -296,14 +297,8 @@
       loader.load(
         '../static/assets/rocket.obj',
         function (obj) {
-          obj.traverse(function (child) {
-            if (child instanceof THREE.Mesh) {
-              child.material = new THREE.MeshPhongMaterial( {color: 0x333333} );
-              child.castShadow = true;
-            }
-          });
           obj.scale.set(0.2, 0.2, 0.2);
-          object.position.y = 100;
+          obj.position.y = 300;
           scene.add(obj);
         }, 
         function (xhr) {

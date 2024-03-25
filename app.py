@@ -17,7 +17,7 @@ def replay_log():
         i = 0
         while True:
             # sleep to mimic 10 hz that the fc will send packets
-            time.sleep(0.1)
+            time.sleep(0.2)
             msg = json.loads(content[i])
             # print(msg)
             socketio.emit("data", msg)
