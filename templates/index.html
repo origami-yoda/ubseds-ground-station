@@ -63,7 +63,7 @@
             <div class="card">
               <div class="card-body">
                 <h5 class="card-title text-center">Ping</h5>
-                <p class="card-text text-center">3 ms</p>
+                <p id="ping" class="card-text text-center">-</p>
               </div>
             </div>
           </div>
@@ -297,8 +297,8 @@
       loader.load(
         '../static/assets/rocket.obj',
         function (obj) {
-          obj.scale.set(0.2, 0.2, 0.2);
-          obj.position.y = 300;
+          obj.scale.set(0.25, 0.25, 0.25);
+          obj.position.y = 350;
           scene.add(obj);
         }, 
         function (xhr) {
@@ -324,6 +324,8 @@
       });
     });
 
+    let lastPacketTime = null;
+
     socket.on('data', function (packet) {
       document.getElementById('phase').innerText = packet.phase;
       document.getElementById('voltage').innerText = packet.batt_v + ' V';
@@ -331,6 +333,11 @@
       document.getElementById('raw-acc').innerText = Math.round(packet.raw_acc * 1000) / 1000;
       document.getElementById('raw-alt').innerText = Math.round(packet.raw_alt * 1000) / 1000;
 
+      let currentPacketTime = new Date().getTime();
+      let ping = lastPacketTime ? (currentPacketTime - lastPacketTime) + ' ms' : 'N/A';
+      lastPacketTime = currentPacketTime;
+
+      document.getElementById('ping').innerText = ping;
 
       accelData.push(packet.acc);
       accelTimeData.push(Math.round((packet.millis / 1000) * 100) / 100);
