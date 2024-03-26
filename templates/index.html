@@ -282,16 +282,21 @@
 
     document.addEventListener("DOMContentLoaded", function () {
       const scene = new THREE.Scene();
-      const camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
+      const camera = new THREE.OrthographicCamera(window.innerWidth / - 2, window.innerWidth / 2, window.innerHeight / 2, window.innerHeight / - 2, 1, 1000);
 
       const modelContainer = document.getElementById('rocket-model');
-      const renderer = new THREE.WebGLRenderer( {antialias: true} );
+      const renderer = new THREE.WebGLRenderer();
+      renderer.setPixelRatio( window.devicePixelRatio );
+      renderer.shadowMap.enabled = true;
+      renderer.shadowMap.type = THREE.PCFSoftShadowMap;
       renderer.setClearColor(0xffffff);
       renderer.setSize(modelContainer.clientWidth, modelContainer.clientHeight);
       modelContainer.appendChild(renderer.domElement);
 
-      const ambientLight = new THREE.AmbientLight(0x404040, 0.5);
-      scene.add(ambientLight);
+      const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
+      directionalLight.position.set(0,400,400);
+      directionalLight.castShadow = true;
+      scene.add(directionalLight);
 
       const loader = new THREE.OBJLoader();
       loader.load(
@@ -299,6 +304,12 @@
         function (obj) {
           obj.scale.set(0.25, 0.25, 0.25);
           obj.position.y = 350;
+          obj.name = 'rocketModel';
+          obj.traverse(function (child) {
+            if (child instanceof THREE.Mesh) {
+              child.material.flatShading = false;
+            }
+          });
           scene.add(obj);
         }, 
         function (xhr) {
@@ -313,15 +324,13 @@
 
       function animate() {
         requestAnimationFrame(animate);
+        const rocketModel = scene.getObjectByName('rocketModel');
+        if (rocketModel) {
+          rocketModel.rotation.y += 0.01;
+        }
         renderer.render(scene, camera);
       }
       animate();
-
-      window.addEventListener("resize", function () {
-        camera.aspect = window.innerWidth/window.innerHeight;
-        camera.updateProjectionMatrix();
-        renderer.setSize(window.innerWidth, window.innerHeight);
-      });
     });
 
     let lastPacketTime = null;
