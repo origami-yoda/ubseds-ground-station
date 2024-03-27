@@ -9,13 +9,7 @@ It takes data in the form of packets from the radio and displays the information
 
 To get started, clone this repo and make sure you have Python 3.12 installed.
 
-In windows command prompt:
-```
-python3 --version
-```
-should give Python 3.12.X
-
-In Apple/Linux terminal:
+In windows command prompt or Apple/Linux terminal:
 ```
 python3 --version
 ```
