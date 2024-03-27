@@ -16,6 +16,7 @@
   <script src="../static/js/ol.min.js"></script>
   <script src="../static/js/three.min.js"></script>
   <script src="../static/js/OBJLoader.js"></script>
+  <script src="../static/js/OrbitControls.js"></script>
 </head>
 
 <body>
@@ -28,10 +29,10 @@
       <div class="col-md-8">
         <div class="row justify-content-end">
           <div class="col-md-auto">
-            <button type="button" class="map-button btn-primary btn-lg">ejection</button>
+            <button type="button" class="map-button btn-primary btn-lg">Ejection</button>
           </div>
           <div class="col-md-auto">
-            <button type="button" class="map-button btn-primary btn-lg">reefing</button>
+            <button type="button" class="map-button btn-primary btn-lg">Reefing</button>
           </div>
           <div class="col-md-auto">
             <div class="card">
@@ -248,7 +249,7 @@
         ],
         view: new ol.View({
           center: ol.proj.fromLonLat([0, 0]),
-          zoom: 2 
+          zoom: 0.1
         })
       });
     }
@@ -292,12 +293,20 @@
 
       const modelContainer = document.getElementById('rocket-model');
       const renderer = new THREE.WebGLRenderer();
+
+      const control =  new THREE.OrbitControls(camera, renderer.domElement);
+
       renderer.setPixelRatio( window.devicePixelRatio );
       renderer.shadowMap.enabled = true;
       renderer.shadowMap.type = THREE.PCFSoftShadowMap;
       renderer.setClearColor(0xffffff);
       renderer.setSize(modelContainer.clientWidth, modelContainer.clientHeight);
       modelContainer.appendChild(renderer.domElement);
+      
+      const axesHelper = new THREE.AxesHelper( 500 );
+      scene.add( axesHelper );
+
+      const controls = new THREE.OrbitControls(camera, renderer.domElement);
 
       const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
       directionalLight.position.set(0,400,400);
@@ -330,6 +339,7 @@
 
       function animate() {
         requestAnimationFrame(animate);
+        controls.update();
         const rocketModel = scene.getObjectByName('rocketModel');
         if (rocketModel) {
           rocketModel.rotation.y += 0.01;
