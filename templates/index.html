@@ -322,9 +322,9 @@
       button.addEventListener('click', function () {
         const buttonText = button.textContent.trim();
         if (buttonText === "Ejection") {
-          sendTestPacket(1);
+          sendTestPacket();
         } else if (buttonText === "Reefing") {
-          sendTestPacket(2);
+          sendTestPacket();
         }
       });
     });

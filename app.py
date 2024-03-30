@@ -13,11 +13,13 @@ import os
 app = Flask(__name__)
 socketio = SocketIO(app)
 
+port = 'COM3'
+serial_port = None
+
 def read_thread():
     parser = Parser()
-
-    # Replace this with a yaml config thingy
-    port = "COM3"
+    global port 
+    # Replace this with a yaml config thing
     if port is None:
         ports = comports()
         if len(ports) == 1:
@@ -29,7 +31,8 @@ def read_thread():
 
     print(f"Connecting to {port}")
     try:
-        s = serial.Serial(port, baudrate=115200)
+        global serial_port 
+        serial_port = serial.Serial(port, baudrate=115200)
     except:
         print("Could not connect to port", port)
         print("Using 'replay.log' instead")
@@ -38,7 +41,7 @@ def read_thread():
     log_filename = os.path.join('logs/' + datetime.now().strftime("%Y%m%dT%H%M%S.log"))
     with open(log_filename, "a", encoding="utf-8") as log_file:
         while True:
-            buf = s.read(parser.PKT_LEN)
+            buf = serial_port.read(parser.PKT_LEN)
             data = parser.parse(buf)
             for msg in data:
                 print(msg)
@@ -77,10 +80,12 @@ def handle_disconnect():
 
 @socketio.on('testingPacket')
 def testingPacket(packet):
-    if packet == 1:
-        print('Ejection')
-    elif packet == 2:
-        print('Reefing')
+    data = packet.get("data")
+    # 1 is ejection, 2 is reefing
+    if data == 1:
+        serial_port.write("d".encode("utf-8"))
+    elif data == 2:
+        serial_port.write("m".encode("utf-8"))
 
 if __name__ == '__main__':
     socketio.run(app, debug=True)
