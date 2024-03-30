@@ -111,8 +111,8 @@ class Parser:
                 "batt_v": batt_mv / 1000,  # Convert from mV to V
                 "phase": self.FLIGHT_PHASES[phase],
                 "ang_vel_vector": raw_gyro, 
-                "ang_acc_vector": raw_acc 
-
+                "ang_acc_vector": raw_acc, 
+                "vref": vref_v
             })
 
         # Now remove all of the data from the buffer that has already been parsed
