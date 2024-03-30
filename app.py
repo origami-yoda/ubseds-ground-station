@@ -35,7 +35,7 @@ def read_thread():
         print("Using 'replay.log' instead")
         replay_log()
 
-    log_filename = os.path.join('logs' + datetime.now().strftime("%Y%m%dT%H%M%S.log"))
+    log_filename = os.path.join('logs/' + datetime.now().strftime("%Y%m%dT%H%M%S.log"))
     with open(log_filename, "a", encoding="utf-8") as log_file:
         while True:
             buf = s.read(parser.PKT_LEN)
