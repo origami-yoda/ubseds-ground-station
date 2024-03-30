@@ -36,5 +36,9 @@ def handle_connect():
 def handle_disconnect():
     print('Client disconnected')
 
+@socketio.on('testingPacket')
+def testingPacket(packet):
+    print("Received packet: " + packet)
+
 if __name__ == '__main__':
     socketio.run(app, debug=True)
