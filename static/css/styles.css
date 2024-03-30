@@ -41,6 +41,11 @@ body {
   width: 100px;
 }
 
+.test-button {
+  margin-top: 10px;
+  border-radius: 10px !important;
+}
+
 .chart-container {
   background-color: white;
   padding: 10px;

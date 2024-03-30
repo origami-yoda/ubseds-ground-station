@@ -4,10 +4,10 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Ground Station</title>
+  <title>UB SEDS Ground Station</title>
   <link rel="stylesheet" href="../static/css/styles.css">
   <link rel="stylesheet" href="../static/css/bootstrap.min.css">
-  <link rel="stylesheet" href="../static/css/ol.css">
+  <link rel="stylesheet" href="../static/css/ol.min.css">
 
   <script src="../static/js/socket.io.js"></script>
   <script src="../static/js/chart.umd.js"></script>
@@ -29,10 +29,10 @@
       <div class="col-md-8">
         <div class="row justify-content-end">
           <div class="col-md-auto">
-            <button type="button" class="btn-primary btn-lg">Ejection</button>
+            <button type="button" class="test-button btn-primary btn-lg ejection">Ejection</button>
           </div>
           <div class="col-md-auto">
-            <button type="button" class="btn-primary btn-lg">Reefing</button>
+            <button type="button" class="test-button btn-primary btn-lg reefing">Reefing</button>
           </div>
           <div class="col-md-auto">
             <div class="card">
@@ -154,6 +154,27 @@
         button.textContent = "Telemetry";
       }
     }
+    document.addEventListener("DOMContentLoaded", function () {
+      // Function to send a testing packet
+      function sendTestingPacket(action, data) {
+        const packet = {
+          action: action,
+          data: data
+        };
+        socket.emit('testingPacket', packet);
+      }
+
+      // Add event listener for the "Ejection" button
+      document.querySelector('.test-button.ejection').addEventListener('click', function () {
+        sendTestingPacket('ejection', 1);
+      });
+
+      // Add event listener for the "Reefing" button
+      document.querySelector('.test-button.reefing').addEventListener('click', function () {
+        sendTestingPacket('reefing', 2);
+      });
+    });
+
   </script>
   <script>
     // Initializing the socket
@@ -240,6 +261,7 @@
     let map;
 
     function initMap() {
+      console.log("Loading map...");
       map = new ol.Map({
         target: "mapContainer",
         layers: [
@@ -248,9 +270,14 @@
           })
         ],
         view: new ol.View({
-          center: ol.proj.fromLonLat([0, 0]),
-          zoom: 0.1
+          center: ol.proj.fromLonLat([-107, 33]),
+          zoom: 5,
+          // maxZoom: 5
         })
+      });
+      map.getView().on('change:resolution', function () {
+        const zoom = map.getView().getZoom();
+        console.log('Current zoom level:', zoom);
       });
     }
 
@@ -270,7 +297,7 @@
       let markerStyle = new ol.style.Style({
         image: new ol.style.Icon({
           src: "../static/img/marker.png",
-          scale: 0.1  
+          scale: 0.1
         })
       });
 
@@ -294,22 +321,22 @@
       const modelContainer = document.getElementById('rocket-model');
       const renderer = new THREE.WebGLRenderer();
 
-      const control =  new THREE.OrbitControls(camera, renderer.domElement);
+      const control = new THREE.OrbitControls(camera, renderer.domElement);
 
-      renderer.setPixelRatio( window.devicePixelRatio );
+      renderer.setPixelRatio(window.devicePixelRatio);
       renderer.shadowMap.enabled = true;
       renderer.shadowMap.type = THREE.PCFSoftShadowMap;
       renderer.setClearColor(0xffffff);
       renderer.setSize(modelContainer.clientWidth, modelContainer.clientHeight);
       modelContainer.appendChild(renderer.domElement);
-      
-      const axesHelper = new THREE.AxesHelper( 500 );
-      scene.add( axesHelper );
+
+      const axesHelper = new THREE.AxesHelper(500);
+      scene.add(axesHelper);
 
       const controls = new THREE.OrbitControls(camera, renderer.domElement);
 
       const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
-      directionalLight.position.set(0,400,400);
+      directionalLight.position.set(0, 400, 400);
       directionalLight.castShadow = true;
       scene.add(directionalLight);
 
@@ -326,10 +353,10 @@
             }
           });
           scene.add(obj);
-        }, 
+        },
         function (xhr) {
-          console.log((xhr.loaded/xhr.total) * 100 + "% loaded");
-        }, 
+          console.log((xhr.loaded / xhr.total) * 100 + "% loaded");
+        },
         function (error) {
           console.error("Error loading model: " + error);
         }
