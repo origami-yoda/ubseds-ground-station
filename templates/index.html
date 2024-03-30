@@ -250,11 +250,11 @@
 
     let pressureGauge = new JustGage({
       id: "pressureGauge",
-      value: 60,
-      min: 30,
-      max: 90,
+      value: 0,
+      min: 50,
+      max: 120,
       title: "Pressure",
-      label: "PSI",
+      label: "kPa",
       decimals: true
     })
 
@@ -313,7 +313,7 @@
 
       map.addLayer(vectorLayer);
     }
-    
+
     function sendTestPacket(action) {
       socket.emit('testingPacket', action);
     }
@@ -425,6 +425,7 @@
       velocityChart.update();
 
       temperatureGauge.refresh(packet.temp);
+      pressureGauge.refresh(Math.round((packet.pressure/1000)*100)/100)
 
       addMarker(packet.lon, packet.lat);
     });

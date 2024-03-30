@@ -8,30 +8,16 @@ from threading import Thread
 from radio import Parser
 from datetime import datetime
 from serial.tools.list_ports import comports
+import os
+
 app = Flask(__name__)
 socketio = SocketIO(app)
-
-def replay_log():
-    # Time to wait for replay
-    time.sleep(0.5)
-    with open("replay.log", "r", encoding="utf-8") as file:
-        content = file.readlines()
-        line_num = len(content)
-        i = 0
-        while True:
-            # sleep to mimic 5 hz that the fc will send packets
-            time.sleep(0.2)
-            msg = json.loads(content[i])
-            # print(msg)
-            socketio.emit("data", msg)
-            i = (i + 1) % line_num
 
 def read_thread():
     parser = Parser()
 
     # Replace this with a yaml config thingy
-    port = "/dev/ttyUSB0"
-    s = serial.Serial(port, baudrate=115200)
+    port = "COM3"
     if port is None:
         ports = comports()
         if len(ports) == 1:
@@ -49,7 +35,7 @@ def read_thread():
         print("Using 'replay.log' instead")
         replay_log()
 
-    log_filename = datetime.now().strftime("%Y%m%dT%H%M%S.log")
+    log_filename = os.path.join('logs/' + datetime.now().strftime("%Y%m%dT%H%M%S.log"))
     with open(log_filename, "a", encoding="utf-8") as log_file:
         while True:
             buf = s.read(parser.PKT_LEN)
@@ -59,6 +45,22 @@ def read_thread():
                 socketio.emit("data", msg)
                 json.dump(msg, log_file)
                 log_file.write("\n")
+
+def replay_log():
+    # Time to wait for replay
+    time.sleep(0.5)
+    print("Using replay log...")
+    with open("replay.log", "r", encoding="utf-8") as file:
+        content = file.readlines()
+        line_num = len(content)
+        i = 0
+        while True:
+            # sleep to mimic 5 hz that the fc will send packets
+            time.sleep(0.2)
+            msg = json.loads(content[i])
+            # print(msg)
+            socketio.emit("data", msg)
+            i = (i + 1) % line_num
 
 @app.route('/')
 def index():

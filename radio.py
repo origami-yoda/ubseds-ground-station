@@ -107,8 +107,12 @@ class Parser:
                 "lon": lon,
                 "apogee": apogee,
                 "temp": temp / 100,  # Convert to Celsius
+                "pressure": raw_pressure,
                 "batt_v": batt_mv / 1000,  # Convert from mV to V
-                "phase": self.FLIGHT_PHASES[phase]
+                "phase": self.FLIGHT_PHASES[phase],
+                "ang_vel_vector": raw_gyro, 
+                "ang_acc_vector": raw_acc 
+
             })
 
         # Now remove all of the data from the buffer that has already been parsed
@@ -134,51 +138,3 @@ class Parser:
         self.sync_idx = 0
         self.have_sync = True
         return True
-
-def read_thread():
-    parser = Parser()
-
-    # Replace this with a yaml config thingy
-    port = "/dev/ttyUSB0"
-    if port is None:
-        ports = comports()
-        if len(ports) == 1:
-            port = ports[0].device
-            print("Defaulting to serial port %s", port)
-        else:
-            print("Unable to determine serial port to use.  Set SERIAL_PORT in config.py")
-            return
-
-    print(f"Connecting to {port}")
-    try:
-        s = serial.Serial(port, baudrate=115200)
-    except:
-        print("Could not connect to port %s", port)
-        print("Using 'replay.log' instead")
-        replay_log()
-
-    log_filename = datetime.now().strftime("%Y%m%dT%H%M%S.log")
-    with open(log_filename, "a", encoding="utf-8") as log_file:
-        while True:
-            buf = s.read(parser.PKT_LEN)
-            data = parser.parse(buf)
-            for msg in data:
-                print(msg)
-                socketio.emit("data", msg)
-                json.dump(msg, log_file)
-                log_file.write("\n")
-
-def replay_log():
-    # Time to wait for replay
-    time.sleep(0.5)
-    with open("replay.log", "r", encoding="utf-8") as file:
-        content = file.readlines()
-        line_num = len(content)
-        i = 0
-        while True:
-            # sleep to mimic 5 hz that the fc will send packets
-            time.sleep(0.2)
-            msg = json.loads(content[i])
-            # print(msg)
-            socketio.emit("data", msg)
-            i = (i + 1) % line_num
