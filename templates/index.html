@@ -313,6 +313,21 @@
 
       map.addLayer(vectorLayer);
     }
+    
+    function sendTestPacket(action) {
+      socket.emit('testingPacket', action);
+    }
+
+    document.querySelectorAll('.test-button').forEach(function(button) {
+      button.addEventListener('click', function () {
+        const buttonText = button.textContent.trim();
+        if (buttonText === "Ejection") {
+          sendTestPacket(1);
+        } else if (buttonText === "Reefing") {
+          sendTestPacket(2);
+        }
+      });
+    });
 
     document.addEventListener("DOMContentLoaded", function () {
       const scene = new THREE.Scene();

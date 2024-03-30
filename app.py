@@ -75,7 +75,10 @@ def handle_disconnect():
 
 @socketio.on('testingPacket')
 def testingPacket(packet):
-    print("Received packet: " + packet)
+    if packet == 1:
+        print('Ejection')
+    elif packet == 2:
+        print('Reefing')
 
 if __name__ == '__main__':
     socketio.run(app, debug=True)
