@@ -154,27 +154,6 @@
         button.textContent = "Telemetry";
       }
     }
-    document.addEventListener("DOMContentLoaded", function () {
-      // Function to send a testing packet
-      function sendTestingPacket(action, data) {
-        const packet = {
-          action: action,
-          data: data
-        };
-        socket.emit('testingPacket', packet);
-      }
-
-      // Add event listener for the "Ejection" button
-      document.querySelector('.test-button.ejection').addEventListener('click', function () {
-        sendTestingPacket('ejection', 1);
-      });
-
-      // Add event listener for the "Reefing" button
-      document.querySelector('.test-button.reefing').addEventListener('click', function () {
-        sendTestingPacket('reefing', 2);
-      });
-    });
-
   </script>
   <script>
     // Initializing the socket
