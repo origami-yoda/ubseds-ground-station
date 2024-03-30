@@ -82,6 +82,7 @@ def handle_disconnect():
 def testingPacket(packet):
     data = packet.get("data")
     # 1 is ejection, 2 is reefing
+    # another
     if data == 1:
         serial_port.write("d".encode("utf-8"))
     elif data == 2:
