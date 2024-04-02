@@ -13,20 +13,20 @@ import os
 app = Flask(__name__)
 socketio = SocketIO(app)
 
-port = 'COM3'
+port = '/dev/tty.usbserial-FT7212XY'
 serial_port = None
 
 def read_thread():
     parser = Parser()
     global port 
-    # Replace this with a yaml config thing
+    # Replace this with a yaml config thing (this is a Mistah Nate thing)
     if port is None:
         ports = comports()
         if len(ports) == 1:
             port = ports[0].device
             print("Defaulting to serial port", port)
         else:
-            print("Unable to determine serial port to use.  Set SERIAL_PORT in config.py")
+            print("Unable to determine serial port to use. Set port variable")
             return
 
     print(f"Connecting to {port}")
@@ -51,9 +51,9 @@ def read_thread():
 
 def replay_log():
     # Time to wait for replay
-    time.sleep(0.5)
+    time.sleep(0.2)
     print("Using replay log...")
-    with open("replay.log", "r", encoding="utf-8") as file:
+    with open("logs/replay.log", "r", encoding="utf-8") as file:
         content = file.readlines()
         line_num = len(content)
         i = 0
@@ -80,13 +80,9 @@ def handle_disconnect():
 
 @socketio.on('testingPacket')
 def testingPacket(packet):
-    data = packet.get("data")
-    # 1 is ejection, 2 is reefing
-    # another
-    if data == 1:
-        serial_port.write("d".encode("utf-8"))
-    elif data == 2:
-        serial_port.write("m".encode("utf-8"))
+    print(str(packet))
+    serial_port.write(packet.encode("utf-8"))
+    
 
 if __name__ == '__main__':
     socketio.run(app, debug=True)

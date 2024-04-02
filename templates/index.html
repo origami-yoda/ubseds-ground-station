@@ -111,13 +111,17 @@
           <table class="table">
             <thead>
               <tr>
-                <th class="text-center">Raw Acc</th>
+                <th class="text-center">Raw Acc-X</th>
+                <th class="text-center">Raw Acc-Y</th>
+                <th class="text-center">Raw Acc-Z</th>
                 <th class="text-center">Raw Alt</th>
               </tr>
             </thead>
             <tbody>
               <tr>
-                <td id="raw-acc" class="text-center">-</td>
+                <td id="raw-acc-x" class="text-center">-</td>
+                <td id="raw-acc-y" class="text-center">-</td>
+                <td id="raw-acc-z" class="text-center">-</td>
                 <td id="raw-alt" class="text-center">-</td>
               </tr>
             </tbody>
@@ -261,13 +265,12 @@
     }
 
     window.onload = initMap;
-
     function addMarker(lon, lat) {
       map.getLayers().forEach(layer => {
         if (layer instanceof ol.layer.Vector) {
           layer.getSource().clear();
         }
-      });
+      }); 
 
       let marker = new ol.Feature({
         geometry: new ol.geom.Point(ol.proj.fromLonLat([lon, lat]))
@@ -301,9 +304,9 @@
       button.addEventListener('click', function () {
         const buttonText = button.textContent.trim();
         if (buttonText === "Ejection") {
-          sendTestPacket();
+          sendTestPacket("d");
         } else if (buttonText === "Reefing") {
-          sendTestPacket();
+          sendTestPacket("m");
         }
       });
     });
@@ -339,7 +342,7 @@
         '../static/assets/rocket.obj',
         function (obj) {
           obj.scale.set(0.25, 0.25, 0.25);
-          obj.position.y = 350;
+          obj.position.y = 250;
           obj.name = 'rocketModel';
           obj.traverse(function (child) {
             if (child instanceof THREE.Mesh) {
@@ -356,7 +359,7 @@
         }
       );
 
-      camera.position.set(0, 100, 599);
+      camera.position.set(0, 0, 100);
 
       function animate() {
         requestAnimationFrame(animate);

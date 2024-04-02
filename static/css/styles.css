@@ -70,6 +70,10 @@ body {
   width: 100%;
 }
 
+.table th {
+  font-size: 12px;
+}
+
 .map-button {
   margin-top: -15px !important;
   background-color: #0a244a;
