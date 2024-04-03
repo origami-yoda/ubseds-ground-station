@@ -2,13 +2,17 @@
 <html lang="en">
 
 <head>
+  <!-- Initial Setup -->
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>UB SEDS Ground Station</title>
+
+  <!-- Importing all CSS styles -->
   <link rel="stylesheet" href="../static/css/styles.css">
   <link rel="stylesheet" href="../static/css/bootstrap.min.css">
   <link rel="stylesheet" href="../static/css/ol.min.css">
 
+  <!-- Importing all JS Libraries -->
   <script src="../static/js/socket.io.js"></script>
   <script src="../static/js/chart.umd.js"></script>
   <script src="../static/js/justgage.js"></script>
@@ -19,26 +23,35 @@
   <script src="../static/js/OrbitControls.js"></script>
 </head>
 
+<!-- The ground station is broken into 3 main parts: the header which is always visible and the telemetry/map views -->
+<!-- The telemetry and map views can be toggled with a button -->
+<!-- The initial state has the telemetry view visible and the map view invisible -->
+<!-- Entire ground station uses bootstrap which divides all vertical space into 12 columns and horizontal spaec into rows-->
 <body>
   <div class="container-fluid">
     <div class=row id="header">
+      <!-- Header Div which contains 4 columns for images-->
       <div class="col-md-4">
         <img src="../static/img/logo.png" class="logo" alt="logo">
         <img src="../static/img/ground-station-text.png" class="ground-station-text" alt="Ground Station">
       </div>
+      <!-- 8 columns justified to the left for cards/test buttons -->
       <div class="col-md-8">
         <div class="row justify-content-end">
+          <!-- Testing buttons, activated with an event listener -->
           <div class="col-md-auto">
             <button type="button" class="test-button btn-primary btn-lg ejection">Ejection</button>
           </div>
           <div class="col-md-auto">
             <button type="button" class="test-button btn-primary btn-lg reefing">Reefing</button>
           </div>
+          <!-- All telemetry cards -->
           <div class="col-md-auto">
             <div class="card">
               <div class="card-body">
                 <h5 class="card-title text-center">Status</h5>
-                <p class="card-text text-center">Operational</p>
+                <!-- This needs to be addressed, if we lose connection, it should say disconnected, but what criteria determine this? -->
+                <p class="card-text text-center">Connected</p>
               </div>
             </div>
           </div>
@@ -78,23 +91,34 @@
       </div>
     </div>
   </div>
+  <!-- Telemetry container, contains (mostly) all information, visible on startup -->
   <div class="container-fluid" id="telemetryContainer">
+    <!-- This is questionable, I think this should mean that it takes up 80% of the screen height, but it seems inconsistent -->
     <div class="row" style="height: 80vh;">
+      <!-- Occupies the left side of screen (3 columns) -->
       <div class="col-md-3">
+        <!-- Kalman Acceleration Chart -->
         <div class="chart-container accel">
           <canvas id="accelChart" style="height: 100%; width: 100%;"></canvas>
         </div>
+        <!-- Vertical placement in the HTML determines the veritcal placement in the webpage -->
+        <!-- Kalman Velocity Chart -->
         <div class="chart-container velocity">
           <canvas id="velocityChart" style="height: 100%; width: 100%;"></canvas>
         </div>
       </div>
+      <!-- Occupies middle of the screen (6 columns) -->
       <div class="col-md-6">
+        <!-- Kalmnan Alitude Chart -->
         <div class="chart-container altitude">
           <canvas id="altitudeChart" style="height: 100%; width: 100%;"></canvas>
         </div>
       </div>
+      <!-- Occupies right side of the screen -->
       <div class="col-md-3">
+        <!-- Creating row inside the right-hand side div, divided in half for temperature and pressure guage -->
         <div class="row"">
+          <!-- 6 columns for each gauge -->
           <div class=" col-md-6">
           <div class="gauge-container">
             <div id="temperatureGauge"></div>
@@ -106,6 +130,7 @@
           </div>
         </div>
       </div>
+      <!-- Another row for the raw data chart, height style questionable though -->
       <div class="row raw-data" style="height: 16%;">
         <div class="col-md-12">
           <table class="table">
@@ -128,13 +153,16 @@
           </table>
         </div>
       </div>
+      <!-- Another row for the rocket model -->
       <div class="row" style="height: 52.5%;">
         <div id="rocket-model" class="rocket-model"></div>
       </div>
     </div>
   </div>
   </div>
+  <!-- Map container div,initially hidden -->
   <div class="container-fluid" id="mapContainer" style="display: none; height: 80vh;"></div>
+  <!-- Div to contain the toggle button -->
   <div class="container mt-4">
     <div class="row justify-content-center">
       <div class="col-md-auto">
@@ -142,6 +170,8 @@
       </div>
     </div>
   </div>
+
+  <!-- All functinoality from here on out -->
   <script>
     function toggleTelemetry() {
       let telemetryContainer = document.getElementById("telemetryContainer");
@@ -160,7 +190,18 @@
     }
   </script>
   <script>
-    // Initializing the socket
+
+    // The flight computer creates data which it sends over radio as packets (68 bytes)
+    // The radio on the ground is connected to the ground station via a serial port 
+    // The app.py does two things simultaneously 
+    // one thread runs a flask webserver
+    // the other decodes the packets and creates JSON objects of all the data
+    // The JSON objects are sent to the ground station via a socketio socket in the webserver, which updates the gruond station with data in real time
+
+    // All JS Libraries must be locally available so we can use the ground station in the desert where we won't have connection
+    // All libraries have a build version in the static/js folder
+
+    // Initializing the socket, socketio library
     let socket = io();
     socket.on('connect', function () {
       console.log('Connected to server');
@@ -169,10 +210,12 @@
       console.log('Disconnected from server');
     });
 
-    // Function to create charts
+    // Function to create charts, each plot is versus time, so we have 2 arrays, one is populated with time data, and one with actual data
+    // Using chartjs libary and the rest of the implementation comes from the documentation
     function createChart(canvasId, label, yLabel) {
       let data = [];
       let timeData = [];
+      // All HTML elements can have an ID, and be retreived by getElementById and have things places inside those divs
       let ctx = document.getElementById(canvasId).getContext("2d");
       let chart = new Chart(ctx, {
         type: 'line',
@@ -216,11 +259,12 @@
       return { data, timeData, chart };
     }
 
+    // All chart objects
     let { data: accelData, timeData: accelTimeData, chart: accelChart } = createChart("accelChart", "Acceleration", "Acceleration (m/s^2)");
     let { data: altitudeData, timeData: altitudeTimeData, chart: altitudeChart } = createChart("altitudeChart", "Altitude", "Altitude (m)");
     let { data: velocityData, timeData: velocityTimeData, chart: velocityChart } = createChart("velocityChart", "Velocity", "Velocity (m/s)");
 
-    // Create gauges
+    // Create gauges using justgage.js and raphael.js (logic and drawing respectively)
     let temperatureGauge = new JustGage({
       id: "temperatureGauge",
       value: 0,
@@ -241,12 +285,16 @@
       decimals: true
     })
 
+    // OpenLayers Map
+
     let map;
 
+    // Initializes a map
     function initMap() {
       console.log("Loading map...");
       map = new ol.Map({
         target: "mapContainer",
+        // Open street map
         layers: [
           new ol.layer.Tile({
             source: new ol.source.OSM()
@@ -264,7 +312,10 @@
       });
     }
 
+    // Only when the map div is loaded will
     window.onload = initMap;
+
+    // Adds marker at the specified latitude and longitude point on the map
     function addMarker(lon, lat) {
       map.getLayers().forEach(layer => {
         if (layer instanceof ol.layer.Vector) {
@@ -300,6 +351,7 @@
       socket.emit('testingPacket', action);
     }
 
+    // Sending packet back to the web server over the socket
     document.querySelectorAll('.test-button').forEach(function(button) {
       button.addEventListener('click', function () {
         const buttonText = button.textContent.trim();
@@ -311,6 +363,9 @@
       });
     });
 
+    // Code to render the rocket model using Threejs
+    // A threejs scene contains everything, for us it has a camera, lightsource, and the model itself
+    // Rotation to be implemented
     document.addEventListener("DOMContentLoaded", function () {
       const scene = new THREE.Scene();
       const camera = new THREE.OrthographicCamera(window.innerWidth / - 2, window.innerWidth / 2, window.innerHeight / 2, window.innerHeight / - 2, 1, 1000);
@@ -375,6 +430,7 @@
 
     let lastPacketTime = null;
 
+    // Loading all packet data into their corresponding functions/divs
     socket.on('data', function (packet) {
       document.getElementById('phase').innerText = packet.phase;
       document.getElementById('voltage').innerText = packet.batt_v + ' V';

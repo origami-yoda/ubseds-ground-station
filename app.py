@@ -16,7 +16,9 @@ socketio = SocketIO(app)
 port = '/dev/tty.usbserial-FT7212XY'
 serial_port = None
 
+# Connecting to serial port
 def read_thread():
+    # parser class to go frmo bytes to JSON
     parser = Parser()
     global port 
     # Replace this with a yaml config thing (this is a Mistah Nate thing)
@@ -36,6 +38,7 @@ def read_thread():
     except:
         print("Could not connect to port", port)
         print("Using 'replay.log' instead")
+        # If we arent connected to a serial port, we use the replay file to test
         replay_log()
 
     log_filename = os.path.join('logs/' + datetime.now().strftime("%Y%m%dT%H%M%S.log"))
@@ -78,6 +81,7 @@ def handle_connect():
 def handle_disconnect():
     print('Client disconnected')
 
+# sending infomation back through the serial port
 @socketio.on('testingPacket')
 def testingPacket(packet):
     print(str(packet))
