@@ -321,7 +321,7 @@
         if (layer instanceof ol.layer.Vector) {
           layer.getSource().clear();
         }
-      }); 
+      });
 
       let marker = new ol.Feature({
         geometry: new ol.geom.Point(ol.proj.fromLonLat([lon, lat]))
@@ -351,8 +351,12 @@
       socket.emit('testingPacket', action);
     }
 
+<<<<<<< Updated upstream
     // Sending packet back to the web server over the socket
     document.querySelectorAll('.test-button').forEach(function(button) {
+=======
+    document.querySelectorAll('.test-button').forEach(function (button) {
+>>>>>>> Stashed changes
       button.addEventListener('click', function () {
         const buttonText = button.textContent.trim();
         if (buttonText === "Ejection") {
@@ -363,21 +367,22 @@
       });
     });
 
+<<<<<<< Updated upstream
     // Code to render the rocket model using Threejs
     // A threejs scene contains everything, for us it has a camera, lightsource, and the model itself
     // Rotation to be implemented
+=======
+    let rocketModel;
+    let gyroData = {x: 0, y: 0, z: 0};
+
+>>>>>>> Stashed changes
     document.addEventListener("DOMContentLoaded", function () {
       const scene = new THREE.Scene();
-      const camera = new THREE.OrthographicCamera(window.innerWidth / - 2, window.innerWidth / 2, window.innerHeight / 2, window.innerHeight / - 2, 1, 1000);
-
+      const camera = new THREE.PerspectiveCamera(50, window.innerHeight / window.innerWidth, 0.1, 1000);
       const modelContainer = document.getElementById('rocket-model');
       const renderer = new THREE.WebGLRenderer();
-
       const control = new THREE.OrbitControls(camera, renderer.domElement);
-
       renderer.setPixelRatio(window.devicePixelRatio);
-      renderer.shadowMap.enabled = true;
-      renderer.shadowMap.type = THREE.PCFSoftShadowMap;
       renderer.setClearColor(0xffffff);
       renderer.setSize(modelContainer.clientWidth, modelContainer.clientHeight);
       modelContainer.appendChild(renderer.domElement);
@@ -389,57 +394,53 @@
 
       const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
       directionalLight.position.set(0, 400, 400);
-      directionalLight.castShadow = true;
       scene.add(directionalLight);
 
       const loader = new THREE.OBJLoader();
-      loader.load(
-        '../static/assets/rocket.obj',
-        function (obj) {
-          obj.scale.set(0.25, 0.25, 0.25);
-          obj.position.y = 250;
-          obj.name = 'rocketModel';
-          obj.traverse(function (child) {
-            if (child instanceof THREE.Mesh) {
-              child.material.flatShading = false;
-            }
-          });
-          scene.add(obj);
-        },
-        function (xhr) {
-          console.log((xhr.loaded / xhr.total) * 100 + "% loaded");
-        },
-        function (error) {
-          console.error("Error loading model: " + error);
-        }
-      );
+      loader.load('../static/assets/rocket.obj', function (obj) {
+        obj.scale.set(0.14, 0.14, 0.14);
+        obj.position.y = 150;
+        rocketModel = obj;
+        scene.add(obj);
+      }, function (xhr) {
+        console.log((xhr.loaded / xhr.total) * 100 + "% loaded");
+      }, function (error) {
+        console.error("Error loading model: " + error);
+      });
 
-      camera.position.set(0, 0, 100);
+      camera.position.set(0, 0, 500);
 
       function animate() {
         requestAnimationFrame(animate);
-        controls.update();
-        const rocketModel = scene.getObjectByName('rocketModel');
         if (rocketModel) {
-          rocketModel.rotation.y += 0.01;
+          rocketModel.rotation.x += gyroData.x/5000;
+          rocketModel.rotation.y += gyroData.y/5000;
+          rocketModel.rotation.z += gyroData.z/5000;
         }
+        controls.update();
         renderer.render(scene, camera);
       }
+
       animate();
     });
 
     let lastPacketTime = null;
+    let startTime = performance.now();
 
     // Loading all packet data into their corresponding functions/divs
     socket.on('data', function (packet) {
       document.getElementById('phase').innerText = packet.phase;
       document.getElementById('voltage').innerText = packet.batt_v + ' V';
       document.getElementById('time').innerText = Math.round((packet.millis / 1000) * 100) / 100 + ' S';
-      document.getElementById('raw-acc').innerText = Math.round(packet.raw_acc * 1000) / 1000;
+      document.getElementById('raw-acc-x').innerText = Math.round(packet.raw_acc[0] * 1000) / 1000;
+      document.getElementById('raw-acc-y').innerText = Math.round(packet.raw_acc[1] * 1000) / 1000;
+      document.getElementById('raw-acc-z').innerText = Math.round(packet.raw_acc[2] * 1000) / 1000;
       document.getElementById('raw-alt').innerText = Math.round(packet.raw_alt * 1000) / 1000;
 
-      let currentPacketTime = new Date().getTime();
-      let ping = lastPacketTime ? (currentPacketTime - lastPacketTime) + ' ms' : 'N/A';
+      let currentPacketTime = performance.now();
+      let ping = lastPacketTime
+        ? Math.round(currentPacketTime - lastPacketTime) + ' ms'
+        : 'N/A';
       lastPacketTime = currentPacketTime;
 
       document.getElementById('ping').innerText = ping;
@@ -463,9 +464,13 @@
       velocityChart.update();
 
       temperatureGauge.refresh(packet.temp);
-      pressureGauge.refresh(Math.round((packet.pressure/1000)*100)/100)
+      pressureGauge.refresh(Math.round((packet.pressure / 1000) * 100) / 100)
 
       addMarker(packet.lon, packet.lat);
+
+      gyroData.x = packet.ang_vel_vector[0];
+      gyroData.y = packet.ang_vel_vector[1];
+      gyroData.z = packet.ang_vel_vector[2];
     });
   </script>
 </body>
