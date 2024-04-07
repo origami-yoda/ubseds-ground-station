@@ -312,7 +312,8 @@
     });
 
     let rocketModel;
-    let gyroData = {x: 0, y: 0, z: 0};
+    let prevPacketRotation = { x: 0, y: 0, z: 0 };
+    let prevPacketTime = null;
 
     document.addEventListener("DOMContentLoaded", function () {
       const scene = new THREE.Scene();
@@ -350,10 +351,17 @@
 
       function animate() {
         requestAnimationFrame(animate);
-        if (rocketModel) {
-          rocketModel.rotation.x += gyroData.x/5000;
-          rocketModel.rotation.y += gyroData.y/5000;
-          rocketModel.rotation.z += gyroData.z/5000;
+        if (rocketModel && prevPacketTime !== null) {
+          const currentTime = performance.now();
+          const elapsedTime = (currentTime - prevPacketTime) / 1000; // Convert to seconds
+
+          // Calculate the new rotation based on the previous packet's rotation data and elapsed time
+          const newRotationX = rocketModel.rotation.x + prevPacketRotation.x * elapsedTime;
+          const newRotationY = rocketModel.rotation.y + prevPacketRotation.y * elapsedTime;
+          const newRotationZ = rocketModel.rotation.z + prevPacketRotation.z * elapsedTime;
+
+          // Update the rocket model's rotation
+          rocketModel.rotation.set(newRotationX, newRotationY, newRotationZ);
         }
         controls.update();
         renderer.render(scene, camera);
@@ -405,9 +413,10 @@
 
       addMarker(packet.lon, packet.lat);
 
-      gyroData.x = packet.ang_vel_vector[0];
-      gyroData.y = packet.ang_vel_vector[1];
-      gyroData.z = packet.ang_vel_vector[2];
+      prevPacketRotation.x = Math.trunc(packet.ang_vel_vector[0]) * Math.PI / 180;
+      prevPacketRotation.y = Math.trunc(packet.ang_vel_vector[1]) * Math.PI / 180;
+      prevPacketRotation.z = Math.trunc(packet.ang_vel_vector[2]) * Math.PI / 180;
+      prevPacketTime = performance.now();
     });
   </script>
 </body>
