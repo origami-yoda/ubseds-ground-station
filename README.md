@@ -16,7 +16,7 @@ python3 --version
 should give Python 3.12.X
 
 Then create the virtual environment in which the flask server will be ran. If you are using VSCode, make sure you have the python extension installed. Then open the command palette and type "Python: Create Environment". Select .venv, and install requirements.txt. 
-Then in you terminal, type in 
+Then in your terminal, type in 
 ```
 python -m app
 ```
