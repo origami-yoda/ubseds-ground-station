@@ -35,9 +35,10 @@ def read_thread():
     try:
         global serial_port 
         serial_port = serial.Serial(port, baudrate=115200)
-    except:
+    except Exception as e:
         print("Could not connect to port", port)
         print("Using 'replay.log' instead")
+        print(e)
         # If we arent connected to a serial port, we use the replay file to test
         replay_log()
 
@@ -65,7 +66,7 @@ def replay_log():
             time.sleep(0.2)
             msg = json.loads(content[i])
             # print(msg)
-            socketio.emit("data", msg)
+            socketio.emit("data", msg) 
             i = (i + 1) % line_num
 
 @app.route('/')
