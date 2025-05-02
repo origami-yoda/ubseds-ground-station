@@ -250,7 +250,7 @@
       let text, cmd = null;
       switch (e.target.value) {
         case '1':  text = 'Forwards'; cmd = 't'; break;
-        case '0':  text = 'Neutral';  break;
+        case '0':  text = 'Neutral';  cmd = 'u'; break;
         case '-1': text = 'Backwards'; cmd = 'y'; break;
       }
       triLabel.textContent = text;
