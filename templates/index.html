@@ -1,76 +1,80 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1.0" />
   <title>UB SEDS Ground Station</title>
-  <link rel="stylesheet" href="../static/css/styles.css">
-  <link rel="stylesheet" href="../static/css/bootstrap.min.css">
-  <link rel="stylesheet" href="../static/css/ol.min.css">
-
-  <script src="../static/js/socket.io.js"></script>
-  <script src="../static/js/chart.umd.js"></script>
-  <script src="../static/js/justgage.js"></script>
-  <script src="../static/js/raphael-2.1.4.min.js"></script>
-  <script src="../static/js/ol.min.js"></script>
-  <script src="../static/js/three.min.js"></script>
-  <script src="../static/js/OBJLoader.js"></script>
-  <script src="../static/js/OrbitControls.js"></script>
+  <link rel="stylesheet" href="../static/css/bootstrap.min.css" />
+  <link rel="stylesheet" href="../static/css/styles.css" />
+  <style>
+    .hidden {
+      display: none !important;
+    }
+    .modal-backdrop.show {
+      backdrop-filter: blur(5px);
+      opacity: 0.8 !important;
+    }
+    /* Optional: narrow the tri-state slider */
+    #triSwitch {
+      width: 120px;
+    }
+  </style>
 </head>
-
 <body>
-  <div class="container-fluid">
-    <div class=row id="header">
-      <div class="col-md-4">
-        <img src="../static/img/logo.png" class="logo" alt="logo">
-        <img src="../static/img/ground-station-text.png" class="ground-station-text" alt="Ground Station">
+  <!-- HEADER / NAV BUTTONS -->
+  <div class="container-fluid" id="header">
+    <div class="row align-items-center">
+      <div class="col-12 col-md-auto">
+        <img src="../static/img/logo.png" class="header-logo" />
       </div>
-      <div class="col-md-8">
-        <div class="row justify-content-end">
-          <div class="col-md-auto">
-            <button type="button" class="test-button btn-primary btn-lg ejection">Ejection</button>
-          </div>
-          <div class="col-md-auto">
-            <button type="button" class="test-button btn-primary btn-lg reefing">Reefing</button>
-          </div>
-          <div class="col-md-auto">
-            <div class="card">
-              <div class="card-body">
-                <h5 class="card-title text-center">Status</h5>
-                <p class="card-text text-center">Operational</p>
+      <div class="col-12 col-md-auto">
+        <div class="button-group" id="header-buttons">
+          <button id="btnFill"      type="button" class="btn btn-primary navbtn">Fill</button>
+          <button id="btnTelemetry" type="button" class="btn btn-primary navbtn">Telemetry</button>
+          <button id="btnMap"       type="button" class="btn btn-primary navbtn">Map</button>
+          <button id="btnButtons"   type="button" class="btn btn-primary navbtn">Buttons</button>
+        </div>
+      </div>
+      <div class="col-12 col-md-auto ms-auto">
+        <div class="row row-cols-2 row-cols-md-5 g-3">
+          <!-- status cards… -->
+          <div class="col">
+            <div class="card" style="cursor:pointer" data-bs-toggle="modal" data-bs-target="#busAModal">
+              <div class="card-body text-center">
+                <h5 class="card-title">Bus A</h5>
+                <p class="card-text">555.555 ms</p>
               </div>
             </div>
           </div>
-          <div class="col-md-auto">
-            <div class="card">
-              <div class="card-body">
-                <h5 class="card-title text-center">Phase</h5>
-                <p id="phase" class="card-text text-center">-</p>
+          <div class="col">
+            <div class="card" style="cursor:pointer" data-bs-toggle="modal" data-bs-target="#busBModal">
+              <div class="card-body text-center">
+                <h5 class="card-title">Bus B</h5>
+                <p class="card-text">555.555 V</p>
               </div>
             </div>
           </div>
-          <div class="col-md-auto">
+          <div class="col">
             <div class="card">
-              <div class="card-body">
-                <h5 class="card-title text-center">Time</h5>
-                <p id="time" class="card-text text-center">-</p>
+              <div class="card-body text-center">
+                <h5 class="card-title">Phase</h5>
+                <p class="card-text">Reefed</p>
               </div>
             </div>
           </div>
-          <div class="col-md-auto">
+          <div class="col">
             <div class="card">
-              <div class="card-body">
-                <h5 class="card-title text-center">Voltage</h5>
-                <p id="voltage" class="card-text text-center">-</p>
+              <div class="card-body text-center">
+                <h5 class="card-title">Ping</h5>
+                <p class="card-text">555 ms</p>
               </div>
             </div>
           </div>
-          <div class="col-md-auto">
+          <div class="col">
             <div class="card">
-              <div class="card-body">
-                <h5 class="card-title text-center">Ping</h5>
-                <p id="ping" class="card-text text-center">-</p>
+              <div class="card-body text-center">
+                <h5 class="card-title">Time</h5>
+                <p class="card-text">12:34:56</p>
               </div>
             </div>
           </div>
@@ -78,347 +82,184 @@
       </div>
     </div>
   </div>
-  <div class="container-fluid" id="telemetryContainer">
-    <div class="row" style="height: 80vh;">
-      <div class="col-md-3">
-        <div class="chart-container accel">
-          <canvas id="accelChart" style="height: 100%; width: 100%;"></canvas>
-        </div>
-        <div class="chart-container velocity">
-          <canvas id="velocityChart" style="height: 100%; width: 100%;"></canvas>
-        </div>
-      </div>
-      <div class="col-md-6">
-        <div class="chart-container altitude">
-          <canvas id="altitudeChart" style="height: 100%; width: 100%;"></canvas>
-        </div>
-      </div>
-      <div class="col-md-3">
-        <div class="row"">
-          <div class=" col-md-6">
-          <div class="gauge-container">
-            <div id="temperatureGauge"></div>
-          </div>
-        </div>
-        <div class="col-md-6">
-          <div class="gauge-container">
-            <div id="pressureGauge"></div>
+
+  <!-- FILL VIEW -->
+  <div id="fill-view" class="container-fluid hidden" style="height: calc(100vh - 80px); padding-top: 1rem;">
+    <div class="row h-100 g-3">
+      <div class="col-12 col-md-6 h-100">
+        <div class="card h-100">
+          <div class="card-body">
+            <h2>Pressure Transducer</h2>
           </div>
         </div>
       </div>
-      <div class="row raw-data" style="height: 16%;">
-        <div class="col-md-12">
-          <table class="table">
-            <thead>
-              <tr>
-                <th class="text-center">Raw Acc-X</th>
-                <th class="text-center">Raw Acc-Y</th>
-                <th class="text-center">Raw Acc-Z</th>
-                <th class="text-center">Raw Alt</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td id="raw-acc-x" class="text-center">-</td>
-                <td id="raw-acc-y" class="text-center">-</td>
-                <td id="raw-acc-z" class="text-center">-</td>
-                <td id="raw-alt" class="text-center">-</td>
-              </tr>
-            </tbody>
-          </table>
+      <div class="col-12 col-md-6 h-100">
+        <div class="card h-100">
+          <div class="card-body">
+            <h2>Load Cells</h2>
+          </div>
         </div>
       </div>
-      <div class="row" style="height: 52.5%;">
-        <div id="rocket-model" class="rocket-model"></div>
+    </div>
+  </div>
+
+  <!-- TELEMETRY VIEW -->
+  <div id="telemetry-view" class="container-fluid my-3 hidden">
+    <div class="row g-3">
+      <div class="col-12 col-md-3">
+        <div class="card mb-3" style="height:42vh;"><h2>Kalman Acceleration</h2></div>
+        <div class="card"       style="height:43vh;"><h2>Kalman Velocity</h2></div>
+      </div>
+      <div class="col-12 col-md-6">
+        <div class="card" style="height:87vh;"><h2>Kalman Altitude</h2></div>
+      </div>
+      <div class="col-12 col-md-3">
+        <div class="card mb-3" style="height:42vh;"><h2>Miscellaneous</h2></div>
+        <div class="card"       style="height:43vh;"><h2>Rocket</h2></div>
       </div>
     </div>
   </div>
-  </div>
-  <div class="container-fluid" id="mapContainer" style="display: none; height: 80vh;"></div>
-  <div class="container mt-4">
-    <div class="row justify-content-center">
-      <div class="col-md-auto">
-        <button class="btn map-button" onclick="toggleTelemetry()">Map</button>
+
+  <!-- MAP VIEW -->
+  <div id="map-view" class="container-fluid my-3 hidden">
+    <div class="row">
+      <div class="col">
+        <div class="card p-3">
+          <h2>Map View</h2>
+          <p>giggity</p>
+        </div>
       </div>
     </div>
   </div>
+
+  <!-- BUTTONS VIEW -->
+  <div id="buttons-view" class="container-fluid my-3 hidden">
+    <div class="row">
+      <div class="col">
+        <div class="card p-3">
+          <h2>Buttons Page</h2>
+
+          <!-- N20 Valve Switch -->
+          <div class="form-check form-switch mt-3">
+            <input class="form-check-input" type="checkbox" id="toggleSwitch1" />
+            <label class="form-check-label" for="toggleSwitch1">N20</label>
+          </div>
+
+          <!-- N2 Valve Switch -->
+          <div class="form-check form-switch mt-3">
+            <input class="form-check-input" type="checkbox" id="toggleSwitch2" />
+            <label class="form-check-label" for="toggleSwitch2">N2</label>
+          </div>
+
+          <!-- Tri-State: Backwards / Neutral / Forwards -->
+          <div class="mt-4">
+            <label for="triSwitch" class="form-label">Lin Acc + QD</label>
+            <input
+              type="range"
+              class="form-range"
+              id="triSwitch"
+              min="-1"
+              max="1"
+              step="1"
+              value="0"
+              list="triStates"
+            />
+            <datalist id="triStates">
+              <option value="-1" label="Backwards"></option>
+              <option value="0"  label="Neutral"></option>
+              <option value="1"  label="Forwards"></option>
+            </datalist>
+            <div id="triLabel" class="mt-1">Neutral</div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODALS -->
+  <div class="modal fade" id="busAModal" tabindex="-1" aria-labelledby="busAModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="busAModalLabel">Bus A Details</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <p>Bus A details go here.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal fade" id="busBModal" tabindex="-1" aria-labelledby="busBModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="busBModalLabel">Bus B Details</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <p>Bus B details go here.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SCRIPTS -->
+  <script src="../static/js/bootstrap.bundle.min.js"></script>
+  <script src="/static/js/socket.io.js"></script>
   <script>
-    function toggleTelemetry() {
-      let telemetryContainer = document.getElementById("telemetryContainer");
-      let mapContainer = document.getElementById("mapContainer");
-      let button = document.querySelector(".map-button");
+    // — View switching
+    function showView(viewId) {
+      document.querySelectorAll(
+        '#fill-view, #telemetry-view, #map-view, #buttons-view'
+      ).forEach(div => div.classList.add('hidden'));
+      document.getElementById(viewId).classList.remove('hidden');
+    }
+    document.getElementById('btnFill')     .addEventListener('click', () => showView('fill-view'));
+    document.getElementById('btnTelemetry').addEventListener('click', () => showView('telemetry-view'));
+    document.getElementById('btnMap')      .addEventListener('click', () => showView('map-view'));
+    document.getElementById('btnButtons')  .addEventListener('click', () => showView('buttons-view'));
+    showView('telemetry-view');
 
-      if (telemetryContainer.style.display === "none") {
-        telemetryContainer.style.display = "block";
-        mapContainer.style.display = "none";
-        button.textContent = "Map";
-      } else {
-        telemetryContainer.style.display = "none";
-        mapContainer.style.display = "block";
-        button.textContent = "Telemetry";
+    // — Socket.IO setup
+    const socket = io();
+    socket.on('connect', () => console.log('Connected to server'));
+
+    // — Element refs
+    const toggle1   = document.getElementById('toggleSwitch1');
+    const toggle2   = document.getElementById('toggleSwitch2');
+    const triSwitch = document.getElementById('triSwitch');
+    const triLabel  = document.getElementById('triLabel');
+
+    // — Handlers
+    toggle1.addEventListener('change', e => {
+      const cmd = e.target.checked ? 'e' : 'r';
+      console.log(`N20 valve ${e.target.checked ? 'ON' : 'OFF'} → "${cmd}"`);
+      socket.emit('command', cmd);
+    });
+
+    toggle2.addEventListener('change', e => {
+      const cmd = e.target.checked ? 'q' : 'w';
+      console.log(`N2 valve ${e.target.checked ? 'ON' : 'OFF'} → "${cmd}"`);
+      socket.emit('command', cmd);
+    });
+
+    triSwitch.addEventListener('input', e => {
+      let text, cmd = null;
+      switch (e.target.value) {
+        case '1':  text = 'Forwards'; cmd = 't'; break;
+        case '0':  text = 'Neutral';  break;
+        case '-1': text = 'Backwards'; cmd = 'y'; break;
       }
-    }
-  </script>
-  <script>
-    // Initializing the socket
-    let socket = io();
-    socket.on('connect', function () {
-      console.log('Connected to server');
-    });
-    socket.on('disconnect', function () {
-      console.log('Disconnected from server');
-    });
-
-    // Function to create charts
-    function createChart(canvasId, label, yLabel) {
-      let data = [];
-      let timeData = [];
-      let ctx = document.getElementById(canvasId).getContext("2d");
-      let chart = new Chart(ctx, {
-        type: 'line',
-        data: {
-          labels: [],
-          datasets: [{
-            label: label,
-            data: data,
-            borderColor: '  ',
-            fill: false,
-            pointRadius: 2,
-          }]
-        },
-        options: {
-          scales: {
-            x: {
-              title: {
-                display: true,
-                text: 'Time (s)'
-              }
-            },
-            y: {
-              title: {
-                display: true,
-                text: yLabel
-              }
-            }
-          },
-          plugins: {
-            legend: {
-              display: false // Hide the legend
-            },
-            title: {
-              display: true,
-              text: label + ' vs Time' // Set the title text
-            }
-          }
-        }
-      });
-
-      return { data, timeData, chart };
-    }
-
-    let { data: accelData, timeData: accelTimeData, chart: accelChart } = createChart("accelChart", "Acceleration", "Acceleration (m/s^2)");
-    let { data: altitudeData, timeData: altitudeTimeData, chart: altitudeChart } = createChart("altitudeChart", "Altitude", "Altitude (m)");
-    let { data: velocityData, timeData: velocityTimeData, chart: velocityChart } = createChart("velocityChart", "Velocity", "Velocity (m/s)");
-
-    // Create gauges
-    let temperatureGauge = new JustGage({
-      id: "temperatureGauge",
-      value: 0,
-      min: 30,
-      max: 90,
-      title: "Temperature",
-      label: "°C",
-      decimals: true
-    })
-
-    let pressureGauge = new JustGage({
-      id: "pressureGauge",
-      value: 0,
-      min: 50,
-      max: 120,
-      title: "Pressure",
-      label: "kPa",
-      decimals: true
-    })
-
-    let map;
-
-    function initMap() {
-      console.log("Loading map...");
-      map = new ol.Map({
-        target: "mapContainer",
-        layers: [
-          new ol.layer.Tile({
-            source: new ol.source.OSM()
-          })
-        ],
-        view: new ol.View({
-          center: ol.proj.fromLonLat([-107, 33]),
-          zoom: 5,
-          // maxZoom: 5
-        })
-      });
-      map.getView().on('change:resolution', function () {
-        const zoom = map.getView().getZoom();
-        console.log('Current zoom level:', zoom);
-      });
-    }
-
-    window.onload = initMap;
-    function addMarker(lon, lat) {
-      map.getLayers().forEach(layer => {
-        if (layer instanceof ol.layer.Vector) {
-          layer.getSource().clear();
-        }
-      });
-
-      let marker = new ol.Feature({
-        geometry: new ol.geom.Point(ol.proj.fromLonLat([lon, lat]))
-      });
-
-      let markerStyle = new ol.style.Style({
-        image: new ol.style.Icon({
-          src: "../static/img/marker.png",
-          scale: 0.1
-        })
-      });
-
-      marker.setStyle(markerStyle);
-
-      let vectorSource = new ol.source.Vector({
-        features: [marker]
-      });
-
-      let vectorLayer = new ol.layer.Vector({
-        source: vectorSource
-      });
-
-      map.addLayer(vectorLayer);
-    }
-
-    function sendTestPacket(action) {
-      socket.emit('testingPacket', action);
-    }
-
-    document.querySelectorAll('.test-button').forEach(function (button) {
-      button.addEventListener('click', function () {
-        const buttonText = button.textContent.trim();
-        if (buttonText === "Ejection") {
-          sendTestPacket("d");
-        } else if (buttonText === "Reefing") {
-          sendTestPacket("m");
-        }
-      });
-    });
-
-    let rocketModel;
-    let prevPacketRotation = { x: 0, y: 0, z: 0 };
-    let prevPacketTime = null;
-
-    document.addEventListener("DOMContentLoaded", function () {
-      const scene = new THREE.Scene();
-      const camera = new THREE.PerspectiveCamera(50, window.innerHeight / window.innerWidth, 0.1, 1000);
-      const modelContainer = document.getElementById('rocket-model');
-      const renderer = new THREE.WebGLRenderer();
-      const control = new THREE.OrbitControls(camera, renderer.domElement);
-      renderer.setPixelRatio(window.devicePixelRatio);
-      renderer.setClearColor(0xffffff);
-      renderer.setSize(modelContainer.clientWidth, modelContainer.clientHeight);
-      modelContainer.appendChild(renderer.domElement);
-
-      const axesHelper = new THREE.AxesHelper(500);
-      scene.add(axesHelper);
-
-      const controls = new THREE.OrbitControls(camera, renderer.domElement);
-
-      const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
-      directionalLight.position.set(0, 400, 400);
-      scene.add(directionalLight);
-
-      const loader = new THREE.OBJLoader();
-      loader.load('../static/assets/rocket.obj', function (obj) {
-        obj.scale.set(0.14, 0.14, 0.14);
-        obj.position.y = 150;
-        rocketModel = obj;
-        scene.add(obj);
-      }, function (xhr) {
-        console.log((xhr.loaded / xhr.total) * 100 + "% loaded");
-      }, function (error) {
-        console.error("Error loading model: " + error);
-      });
-
-      camera.position.set(0, 0, 500);
-
-      function animate() {
-        requestAnimationFrame(animate);
-        if (rocketModel && prevPacketTime !== null) {
-          const currentTime = performance.now();
-          const elapsedTime = (currentTime - prevPacketTime) / 1000; // Convert to seconds
-
-          // Calculate the new rotation based on the previous packet's rotation data and elapsed time
-          const newRotationX = rocketModel.rotation.x + prevPacketRotation.x * elapsedTime;
-          const newRotationY = rocketModel.rotation.y + prevPacketRotation.y * elapsedTime;
-          const newRotationZ = rocketModel.rotation.z + prevPacketRotation.z * elapsedTime;
-
-          // Update the rocket model's rotation
-          rocketModel.rotation.set(newRotationX, newRotationY, newRotationZ);
-        }
-        controls.update();
-        renderer.render(scene, camera);
+      triLabel.textContent = text;
+      console.log(`Tri-State now ${text}`);
+      if (cmd) {
+        console.log(` → sending "${cmd}"`);
+        socket.emit('command', cmd);
       }
-
-      animate();
-    });
-
-    let lastPacketTime = null;
-    let startTime = performance.now();
-
-    socket.on('data', function (packet) {
-      document.getElementById('phase').innerText = packet.phase;
-      document.getElementById('voltage').innerText = packet.batt_v + ' V';
-      document.getElementById('time').innerText = Math.round((packet.millis / 1000) * 100) / 100 + ' S';
-      document.getElementById('raw-acc-x').innerText = Math.round(packet.raw_acc[0] * 1000) / 1000;
-      document.getElementById('raw-acc-y').innerText = Math.round(packet.raw_acc[1] * 1000) / 1000;
-      document.getElementById('raw-acc-z').innerText = Math.round(packet.raw_acc[2] * 1000) / 1000;
-      document.getElementById('raw-alt').innerText = Math.round(packet.raw_alt * 1000) / 1000;
-
-      let currentPacketTime = performance.now();
-      let ping = lastPacketTime
-        ? Math.round(currentPacketTime - lastPacketTime) + ' ms'
-        : 'N/A';
-      lastPacketTime = currentPacketTime;
-
-      document.getElementById('ping').innerText = ping;
-
-      accelData.push(packet.acc);
-      accelTimeData.push(Math.round((packet.millis / 1000) * 100) / 100);
-      accelChart.data.labels = accelTimeData;
-      accelChart.data.datasets[0].data = accelData;
-      accelChart.update();
-
-      altitudeData.push(packet.alt);
-      altitudeTimeData.push(Math.round((packet.millis / 1000) * 100) / 100);
-      altitudeChart.data.labels = altitudeTimeData;
-      altitudeChart.data.datasets[0].data = altitudeData;
-      altitudeChart.update();
-
-      velocityData.push(packet.vel);
-      velocityTimeData.push(Math.round((packet.millis / 1000) * 100) / 100);
-      velocityChart.data.labels = velocityTimeData;
-      velocityChart.data.datasets[0].data = velocityData;
-      velocityChart.update();
-
-      temperatureGauge.refresh(packet.temp);
-      pressureGauge.refresh(Math.round((packet.pressure / 1000) * 100) / 100)
-
-      addMarker(packet.lon, packet.lat);
-
-      prevPacketRotation.x = Math.trunc(packet.ang_vel_vector[0]) * Math.PI / 180;
-      prevPacketRotation.y = Math.trunc(packet.ang_vel_vector[1]) * Math.PI / 180;
-      prevPacketRotation.z = Math.trunc(packet.ang_vel_vector[2]) * Math.PI / 180;
-      prevPacketTime = performance.now();
     });
   </script>
 </body>
-
 </html>
