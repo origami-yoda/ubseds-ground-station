@@ -60,7 +60,8 @@ def handle_command(command):
         'r': 'N2O valve OFF',
         't': 'Tri‐state UP',
         'y': 'Tri‐state DOWN',
-        'u': 'Tri‐state STOP'
+        'u': 'Tri‐state STOP',
+        'i': 'Igniter ON'
     }.get(command, 'Unknown')
 
     print(f"COMMAND RECEIVED → '{command}' ({desc})")
