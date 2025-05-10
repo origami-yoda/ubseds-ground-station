@@ -254,10 +254,8 @@
     });
 
     toggle3.addEventListener('change', e => {
-      if (e.target.checked) {
-        console.log("Igniter valve ON → 'i'");
-        socket.emit('command', 'i');
-      }
+      const cmd = e.target.checked ? 'i' : 'o';
+      socket.emit('command', cmd);
     });
 
     triSwitch.addEventListener('input', e => {

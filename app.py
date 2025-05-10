@@ -61,7 +61,8 @@ def handle_command(command):
         't': 'Tri‐state UP',
         'y': 'Tri‐state DOWN',
         'u': 'Tri‐state STOP',
-        'i': 'Igniter ON'
+        'i': 'Igniter ON',
+        'o': 'Igniter OFF'
     }.get(command, 'Unknown')
 
     print(f"COMMAND RECEIVED → '{command}' ({desc})")
