@@ -14,25 +14,37 @@ socketio = SocketIO(app)
 #   SERIAL SETUP
 # ────────────────────────────────────────────────
 #
-SERIAL_PORT_NAME = '/dev/ttyUSB0'
-BAUDRATE = 57600
-PACKET_SIZE = 84  # sizeof(aggregatePayload_t) on the STM32 side
+RADIO0_PORT    = '/dev/ttyUSB0'   # USB0: send existing commands
+RADIO1_PORT    = '/dev/ttyUSB1'   # USB1: recv telemetry + send new commands
+BAUDRATE       = 57600
+PACKET_SIZE    = 84               # sizeof(aggregatePayload_t)
+FMT            = '<I i 11f h 2x 4f 2f I'
 
-# little-endian struct format (must match your STM32 layout)
-FMT = '<I i 11f h 2x 4f 2f I'
-
+# open radio 0 (commands only)
 try:
-    serial_port = serial.Serial(SERIAL_PORT_NAME, baudrate=BAUDRATE, timeout=1)
-    print(f"[+] Opened serial port {SERIAL_PORT_NAME} @ {BAUDRATE} baud")
+    ser0 = serial.Serial(RADIO0_PORT, BAUDRATE, timeout=1)
+    print(f"[+] Opened RADIO0 on {RADIO0_PORT}")
 except Exception as e:
-    print(f"[!] Failed to open serial port {SERIAL_PORT_NAME}: {e}")
-    serial_port = None
+    print(f"[!] Could not open RADIO0: {e}")
+    ser0 = None
 
+# open radio 1 (telemetry + commands)
+try:
+    ser1 = serial.Serial(RADIO1_PORT, BAUDRATE, timeout=1)
+    print(f"[+] Opened RADIO1 on {RADIO1_PORT}")
+except Exception as e:
+    print(f"[!] Could not open RADIO1: {e}")
+    ser1 = None
+
+#
+# ────────────────────────────────────────────────
+#   PARSE FUNCTION FOR TELEMETRY (USB1)
+# ────────────────────────────────────────────────
+#
 def parse_packet(data: bytes) -> dict:
     fields = struct.unpack(FMT, data)
     idx = 0
 
-    # flightComputerPayload_t
     time_ms = fields[idx]; idx += 1
     phase   = fields[idx]; idx += 1
 
@@ -43,12 +55,9 @@ def parse_packet(data: bytes) -> dict:
     pressure_fc = fields[idx]; idx += 1
     temp        = fields[idx]; idx += 1
 
-    # powerBoardPayload_t
-    voltages = list(fields[idx:idx+4]); idx += 4
-
-    # valveBoardPayload_t
-    v_voltages = list(fields[idx:idx+2]); idx += 2
-    pressure_trans = fields[idx]; idx += 1
+    voltages        = list(fields[idx:idx+4]); idx += 4
+    v_voltages      = list(fields[idx:idx+2]); idx += 2
+    pressure_trans  = fields[idx]; idx += 1
 
     return {
         "flightComputer": {
@@ -68,15 +77,15 @@ def parse_packet(data: bytes) -> dict:
         }
     }
 
-def read_serial_loop():
-    if not serial_port:
+def read_telemetry_loop():
+    """ Continuously read from USB1, emit telemetry """
+    if not ser1:
         return
     while True:
-        data = serial_port.read(PACKET_SIZE)
+        data = ser1.read(PACKET_SIZE)
         if len(data) == PACKET_SIZE:
             try:
                 payload = parse_packet(data)
-                # emit telemetry JSON to all connected web clients
                 socketio.emit('telemetry', payload)
                 print(f"Telemetry: {json.dumps(payload, indent=2)}")
             except struct.error as e:
@@ -85,7 +94,59 @@ def read_serial_loop():
 
 #
 # ────────────────────────────────────────────────
-#   FLASK ROUTES & SOCKET HANDLERS
+#   COMMAND MAPPINGS & ROUTING
+# ────────────────────────────────────────────────
+#
+# USB0 commands (existing set)
+radio0_cmds = {
+    'q': 'N2 valve ON',
+    'w': 'N2 valve OFF',
+    'e': 'N2O valve ON',
+    'r': 'N2O valve OFF',
+    't': 'Tri-state UP',
+    'y': 'Tri-state DOWN',
+    'u': 'Tri-state STOP',
+    'i': 'Igniter ON',
+    'o': 'Igniter OFF'
+}
+
+# USB1 commands (new set)
+radio1_cmds = {
+    'a': 'Normally Open ',
+    's': 'Cmd S',
+    'd': 'Cmd D',
+    'f': 'Cmd F'
+}
+
+@socketio.on('command')
+def handle_command(command):
+    desc = radio0_cmds.get(command) or radio1_cmds.get(command) or 'Unknown'
+    print(f"COMMAND RECEIVED → '{command}' ({desc})")
+
+    if command in radio0_cmds:
+        port, name = ser0, 'RADIO0'
+    elif command in radio1_cmds:
+        port, name = ser1, 'RADIO1'
+    else:
+        print("[!] Unknown command; skipping send")
+        return {'status': 'error', 'msg': 'unknown command'}
+
+    if port and port.is_open:
+        try:
+            port.write(command.encode('utf-8'))
+            port.flush()
+            print(f" → Sent '{command}' on {name}")
+            return {'status': 'ok', 'sent_to': name}
+        except Exception as e:
+            print(f"[!] Error writing to {name}: {e}")
+            return {'status': 'error', 'msg': str(e)}
+    else:
+        print(f"[!] {name} not open; cannot send command")
+        return {'status': 'error', 'msg': f'{name} not open'}
+
+#
+# ────────────────────────────────────────────────
+#   FLASK & SOCKET.IO
 # ────────────────────────────────────────────────
 #
 @app.route('/')
@@ -93,43 +154,13 @@ def index():
     return render_template('index.html')
 
 @socketio.on('connect')
-def handle_connect():
+def on_connect():
     print('Client connected')
 
 @socketio.on('disconnect')
-def handle_disconnect():
+def on_disconnect():
     print('Client disconnected')
 
-@socketio.on('command')
-def handle_command(command):
-    desc = {
-        'q': 'N2 valve ON',
-        'w': 'N2 valve OFF',
-        'e': 'N2O valve ON',
-        'r': 'N2O valve OFF',
-        't': 'Tri-state UP',
-        'y': 'Tri-state DOWN',
-        'u': 'Tri-state STOP',
-        'i': 'Igniter ON',
-        'o': 'Igniter OFF'
-    }.get(command, 'Unknown')
-
-    print(f"COMMAND RECEIVED → '{command}' ({desc})")
-
-    if serial_port and serial_port.is_open:
-        try:
-            serial_port.write(command.encode('utf-8'))
-            serial_port.flush()
-            print(f" → Sent '{command}' over serial")
-        except Exception as e:
-            print(f"[!] Error writing to serial: {e}")
-    else:
-        print("[!] Serial port not open, skipping write")
-
-    return {'status': 'ok'}
-
 if __name__ == '__main__':
-    # start background thread to read and emit telemetry
-    threading.Thread(target=read_serial_loop, daemon=True).start()
-    # start Flask-SocketIO server
+    threading.Thread(target=read_telemetry_loop, daemon=True).start()
     socketio.run(app, debug=True)

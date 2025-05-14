@@ -157,6 +157,16 @@
             <label class="form-check-label" for="toggleSwitch3">Igniter</label>
           </div>
 
+          <div class="form-check form-switch mt-3">
+            <input class="form-check-input" type="checkbox" id="toggleSwitch4" />
+            <label class="form-check-label" for="toggleSwitch4">Normally Open</label>
+          </div>
+
+          <div class="form-check form-switch mt-3">
+            <input class="form-check-input" type="checkbox" id="toggleSwitch5" />
+            <label class="form-check-label" for="toggleSwitch5">Pilot Valve</label>
+          </div>
+
           <!-- Tri-State: Backwards / Neutral / Forwards -->
           <div class="mt-4">
             <label for="triSwitch" class="form-label">Lin Acc + QD</label>
@@ -237,6 +247,8 @@
     const toggle1   = document.getElementById('toggleSwitch1');
     const toggle2   = document.getElementById('toggleSwitch2');
     const toggle3   = document.getElementById('toggleSwitch3');
+    const toggle4   = document.getElementById('toggleSwitch4');
+    const toggle5   = document.getElementById('toggleSwitch5');
     const triSwitch = document.getElementById('triSwitch');
     const triLabel  = document.getElementById('triLabel');
 
@@ -255,6 +267,16 @@
 
     toggle3.addEventListener('change', e => {
       const cmd = e.target.checked ? 'i' : 'o';
+      socket.emit('command', cmd);
+    });
+
+    toggle4.addEventListener('change', e => {
+      const cmd = e.target.checked ? 'a' : 's';
+      socket.emit('command', cmd);
+    });
+
+    toggle5.addEventListener('change', e => {
+      const cmd = e.target.checked ? 'd' : 'f';
       socket.emit('command', cmd);
     });
 
