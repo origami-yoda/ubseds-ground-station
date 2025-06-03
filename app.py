@@ -18,7 +18,7 @@ RADIO0_PORT    = '/dev/ttyUSB0'   # USB0: send existing commands
 RADIO1_PORT    = '/dev/ttyUSB1'   # USB1: recv telemetry + send new commands
 BAUDRATE       = 57600
 PACKET_SIZE    = 84               # sizeof(aggregatePayload_t)
-FMT            = '<I i 11f h 2x 4f 2f I'
+FMT            = '<I i 11f i 4f 2f I'
 
 # open radio 0 (commands only)
 try:
@@ -42,22 +42,49 @@ except Exception as e:
 # ────────────────────────────────────────────────
 #
 def parse_packet(data: bytes) -> dict:
+    # Unpack exactly 84 bytes into:
+    #   time_ms, phase,
+    #   kf_pos, kf_vel, kf_accel, altitude,
+    #   accel_x, accel_y, accel_z,
+    #   gyro_x, gyro_y, gyro_z,
+    #   pressure_fc, temp,
+    #   4 floats for powerBoard.voltages,
+    #   2 floats for valveBoard.voltages,
+    #   1 uint32 for valveBoard.pressureTransducer
     fields = struct.unpack(FMT, data)
     idx = 0
 
     time_ms = fields[idx]; idx += 1
     phase   = fields[idx]; idx += 1
 
-    kf_pos, kf_vel, kf_accel, altitude = fields[idx:idx+4]; idx += 4
-    accel_x, accel_y, accel_z         = fields[idx:idx+3]; idx += 3
-    gyro_x, gyro_y, gyro_z            = fields[idx:idx+3]; idx += 3
+    # Next four floats: kf_pos, kf_vel, kf_accel, altitude
+    kf_pos, kf_vel, kf_accel, altitude = fields[idx:idx+4]
+    idx += 4
 
+    # Next three floats: accel_x, accel_y, accel_z
+    accel_x, accel_y, accel_z = fields[idx:idx+3]
+    idx += 3
+
+    # Next three floats: gyro_x, gyro_y, gyro_z
+    gyro_x, gyro_y, gyro_z = fields[idx:idx+3]
+    idx += 3
+
+    # Next float: pressure from flight computer
     pressure_fc = fields[idx]; idx += 1
-    temp        = fields[idx]; idx += 1
 
-    voltages        = list(fields[idx:idx+4]); idx += 4
-    v_voltages      = list(fields[idx:idx+2]); idx += 2
-    pressure_trans  = fields[idx]; idx += 1
+    # Next int32: temp
+    temp = fields[idx]; idx += 1
+
+    # Next 4 floats: powerBoard.voltages
+    voltages = list(fields[idx:idx+4])
+    idx += 4
+
+    # Next 2 floats: valveBoard.voltages
+    v_voltages = list(fields[idx:idx+2])
+    idx += 2
+
+    # Last uint32: valveBoard.pressureTransducer
+    pressure_trans = fields[idx]; idx += 1
 
     return {
         "flightComputer": {
@@ -76,6 +103,7 @@ def parse_packet(data: bytes) -> dict:
             "pressureTransducer": pressure_trans
         }
     }
+
 
 def read_telemetry_loop():
     """ Continuously read from USB1, emit telemetry """
