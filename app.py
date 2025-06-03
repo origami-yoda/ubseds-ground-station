@@ -18,7 +18,7 @@ RADIO0_PORT    = '/dev/ttyUSB0'   # USB0: send existing commands
 RADIO1_PORT    = '/dev/ttyUSB1'   # USB1: recv telemetry + send new commands
 BAUDRATE       = 57600
 PACKET_SIZE    = 84               # sizeof(aggregatePayload_t)
-FMT            = '<I i 11f h 2x 4f 2f I'
+FMT            = '<I i 11f i 4f 2f I'
 
 # open radio 0 (commands only)
 try:
