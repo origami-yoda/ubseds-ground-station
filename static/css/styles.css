@@ -1,34 +1,74 @@
 body {
-    background-color: black;
-    overflow: hidden;
-  }
-  
-  #header {
-    background-color: #0a244a;  
-  }
-  
-  .button-group {
-    margin-top: 10px;
-    margin-bottom: 10px;
-  }
-  
-  .navbtn {
-    min-width: 80px; 
-    background-color: #1b5ec2; 
-    border: 0;
-    color: #fff;
-  }
-  
-  /* Remove or comment out your old .card margin rules so Bootstrap gutters do the spacing */
-  div.card {
-    /* margin-top: 5px;
-    margin-bottom: 5px; */
-  }
-  
-  /* Keep the .card-body style if you like */
-  .card-body {
-    padding: 0.5rem; 
-    max-height: 75px;
-    min-width: 120px;
-  }
-  
+  background-color: black;
+  overflow: hidden;
+}
+
+#header {
+  background-color: #0a244a;
+}
+
+.button-group {
+  margin-top: 10px;
+  margin-bottom: 10px;
+}
+
+.navbtn {
+  min-width: 80px;
+  background-color: #1b5ec2;
+  border: 0;
+  color: #fff;
+}
+
+/* Keep the .card-body style if you like */
+.card-body {
+  padding: 0.5rem;
+  max-height: 75px;
+  min-width: 120px;
+}
+
+.hidden {
+  display: none !important;
+}
+
+.modal-backdrop.show {
+  backdrop-filter: blur(5px);
+  opacity: 0.8 !important;
+}
+
+#triSwitch {
+  width: 120px;
+}
+
+.chart-container {
+  position: relative;
+  flex-grow: 1;
+  min-height: 0;
+  /* Prevents flexbox overflow issues */
+}
+
+/* 1) Make every card a column-flex container */
+.card {
+  display: flex;
+  flex-direction: column;
+}
+
+/* 2) The <h2> or .card-body header should size itself naturally */
+.card>h2,
+.card .card-body {
+  flex: 0 0 auto;
+}
+
+/* 3) The chart wrapper grows to fill the rest of the card */
+.chart-container {
+  flex: 1 1 auto;
+  position: relative;
+  /* required for Chart.js responsiveness */
+  min-height: 0;
+  /* prevents overflow in flex layouts */
+}
+
+/* 4) Force the <canvas> to fill the wrapper */
+.chart-container canvas {
+  width: 100% !important;
+  height: 100% !important;
+}

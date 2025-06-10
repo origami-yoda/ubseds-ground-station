@@ -19,6 +19,7 @@ RADIO1_PORT    = '/dev/ttyUSB1'   # USB1: recv telemetry + send new commands
 BAUDRATE       = 57600
 PACKET_SIZE    = 84               # sizeof(aggregatePayload_t)
 FMT            = '<I i 11f i 4f 2f I'
+LOG_PATH      = 'replay.log'  
 
 # open radio 0 (commands only)
 try:
@@ -80,6 +81,30 @@ def parse_packet(data: bytes) -> dict:
 def read_telemetry_loop():
     """ Continuously read from USB1, emit telemetry """
     if not ser1:
+        try:
+            print(f"[+] RADIO1 unavailable, replaying JSON from {LOG_PATH}")
+            with open(LOG_PATH, 'r') as log_file:
+                lines = log_file.readlines()
+            if not lines:
+                print(f"[!] {LOG_PATH} is empty")
+                return
+
+            idx = 0
+            while True:
+                raw = lines[idx].strip()
+                idx = (idx + 1) % len(lines)
+                if not raw:
+                    continue
+                try:
+                    payload = json.loads(raw)
+                    socketio.emit('telemetry', payload)
+                except json.JSONDecodeError as e:
+                    print(f"[!] JSON parse error on line {idx}: {e}")
+
+                time.sleep(0.2)
+
+        except Exception as e:
+            print(f"[!] Could not open replay log {LOG_PATH}: {e}")
         return
     while True:
         data = ser1.read(PACKET_SIZE)
